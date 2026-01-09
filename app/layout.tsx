@@ -1,31 +1,24 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
-  title: "Morildinho´s AI Lab",
-  description: "En AI Lekeplass for Nørds",
+  title: "Morildinho AI Lab",
+  description: "En lekeplass for AI, design, vibe coding og eksperimenter.",
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
-    <html lang="en">
+    <html lang="no">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        style={{
+          margin: 0,
+          backgroundColor: "#000",
+          color: "#fff",
+          fontFamily: "system-ui, -apple-system, BlinkMacSystemFont",
+        }}
       >
         {children}
       </body>
