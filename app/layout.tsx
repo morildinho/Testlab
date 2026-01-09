@@ -1,4 +1,10 @@
 import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Morildinho AI Lab",
+  description: "En lekeplass for AI, design, vibe coding og eksperimenter.",
+};
+import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
