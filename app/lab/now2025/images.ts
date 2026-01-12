@@ -35,7 +35,8 @@ export const images: GalleryImage[] = [
     alt: "Main stage performance at NOWLA 2025",
     width: 1920,
     height: 1280,
-        {
+  },
+    {
     src: "/images/now-2025/5.jpg",
     alt: "Main stage performance at NOWLA 2025",
     width: 1920,
