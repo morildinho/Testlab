@@ -25,13 +25,13 @@ export const images: GalleryImage[] = [
     height: 1280,
   },
     {
-    src: "/images/now-2025/3",
+    src: "/images/now-2025/3.jpg",
     alt: "Main stage performance at NOWLA 2025",
     width: 1920,
     height: 1280,
   },
     {
-    src: "/images/now-2025/4",
+    src: "/images/now-2025/4.jpg",
     alt: "Main stage performance at NOWLA 2025",
     width: 1920,
     height: 1280,
