@@ -366,9 +366,9 @@ export default function GalleryClient() {
 
       <div className="gallery-page">
         <header className="hero">
-          <h1 className="hero-title">NOWLA – Highlights 2026</h1>
+          <h1 className="hero-title">NOWLA – Highlights 2025</h1>
           <p className="hero-subtitle">
-            A visual journey through the moments that defined us
+            Check out highlights from NOW 2025
           </p>
           <a href="https://nowla.org" className="back-link">
             <span>←</span> Back to nowla.org
