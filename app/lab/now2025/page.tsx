@@ -1,8 +1,16 @@
 import type { Metadata } from "next";
 import { list } from "@vercel/blob";
 import Link from "next/link";
+import { headers } from "next/headers";
 
 export const dynamic = "force-dynamic";
+
+// Returns base path based on host: "/now2025" for highlights.nowla.org, "/lab/now2025" for others
+async function getBasePath() {
+  const headersList = await headers();
+  const host = headersList.get("host") || "";
+  return host === "highlights.nowla.org" ? "/now2025" : "/lab/now2025";
+}
 
 export const metadata: Metadata = {
   title: "NOWLA 2025 – Photo Albums",
@@ -88,6 +96,7 @@ async function getAlbums(): Promise<AlbumInfo[]> {
 
 export default async function AlbumIndexPage() {
   const albums = await getAlbums();
+  const basePath = await getBasePath();
 
   return (
     <>
@@ -285,7 +294,7 @@ export default async function AlbumIndexPage() {
                 Get started by uploading your first photos. Albums are created
                 automatically based on the folder structure.
               </p>
-              <Link href="/lab/now2025/upload" className="empty-link">
+              <Link href={`${basePath}/upload`} className="empty-link">
                 <span>+</span> Upload Your First Photos
               </Link>
             </div>
@@ -294,7 +303,7 @@ export default async function AlbumIndexPage() {
               {albums.map((album) => (
                 <Link
                   key={album.slug}
-                  href={`/lab/now2025/${album.slug}`}
+                  href={`${basePath}/${album.slug}`}
                   className="album-card"
                 >
                   <img
