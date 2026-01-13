@@ -4,14 +4,19 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [
       {
-        source: "/:path*",
-        has: [
-          {
-            type: "host",
-            value: "highlights.nowla.org",
-          },
-        ],
-        destination: "/lab/now2025/:path*",
+        source: "/",
+        has: [{ type: "host", value: "highlights.nowla.org" }],
+        destination: "/lab/now2025",
+      },
+      {
+        source: "/:album",
+        has: [{ type: "host", value: "highlights.nowla.org" }],
+        destination: "/lab/now2025/:album",
+      },
+      {
+        source: "/upload",
+        has: [{ type: "host", value: "highlights.nowla.org" }],
+        destination: "/lab/now2025/upload",
       },
     ];
   },
