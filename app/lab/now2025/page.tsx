@@ -111,6 +111,12 @@ export default async function AlbumIndexPage() {
           background: linear-gradient(180deg, rgba(0, 0, 0, 0.2) 0%, transparent 100%);
         }
 
+        .hero-logo {
+          width: clamp(180px, 40vw, 320px);
+          height: auto;
+          margin-bottom: 1.5rem;
+        }
+
         .hero-title {
           font-size: clamp(2rem, 6vw, 3.5rem);
           font-weight: 800;
@@ -256,6 +262,11 @@ export default async function AlbumIndexPage() {
 
       <div className="page">
         <header className="hero">
+          <img
+            src="/images/NOW_white.webp"
+            alt="NOW"
+            className="hero-logo"
+          />
           <h1 className="hero-title">NOWLA 2025</h1>
           <p className="hero-subtitle">Photo Albums & Highlights</p>
           <div className="hero-links">
