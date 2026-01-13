@@ -264,7 +264,7 @@ export default async function AlbumIndexPage() {
         <header className="hero">
           <img
             src="/images/NOW_white.webp"
-            alt="NOW Nordic OFFC"
+            alt="NOW"
             className="hero-logo"
           />
           <h1 className="hero-title">NOWLA 2025</h1>
