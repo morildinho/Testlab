@@ -283,7 +283,7 @@ export default async function AlbumIndexPage() {
               {albums.map((album) => (
                 <Link
                   key={album.slug}
-                  href={`/lab/now2025/${album.slug}`}
+                  href={`/${album.slug}`}
                   className="album-card"
                 >
                   <img
