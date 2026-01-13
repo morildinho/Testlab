@@ -32,6 +32,15 @@ export default function Page() {
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
+          <img
+            src="/next.svg"
+            alt="Logo"
+            style={{
+              width: 32,
+              height: 32,
+              filter: "invert(1)",
+            }}
+          />
           <span style={{ fontSize: 18, fontWeight: 700 }}>
             Morildinho AI Lab
           </span>
