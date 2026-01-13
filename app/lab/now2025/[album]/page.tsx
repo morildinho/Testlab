@@ -193,7 +193,7 @@ export default async function AlbumPage({ params }: PageProps) {
             className="hero-logo"
           />
           <nav className="breadcrumb">
-            <Link href="/lab/now2025">Albums</Link>
+            <Link href="../">Albums</Link>
             <span className="breadcrumb-sep">/</span>
             <span className="breadcrumb-current">{albumDisplayName}</span>
           </nav>
