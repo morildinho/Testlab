@@ -21,17 +21,22 @@ export function middleware(req: NextRequest) {
       return NextResponse.next();
     }
 
-    // Rewrite:
-    // highlights.nowla.org/<something> -> /lab/now2025/<something>
     const rewritten = url.clone();
 
     // Root "/" -> "/lab/now2025"
-    if (pathname === "/") {
+    if (pathname === "/" || pathname === "/now2025") {
       rewritten.pathname = "/lab/now2025";
-    } else {
-      rewritten.pathname = `/lab/now2025${pathname}`;
+      return NextResponse.rewrite(rewritten);
     }
 
+    // /now2025/* -> /lab/now2025/*
+    if (pathname.startsWith("/now2025/")) {
+      rewritten.pathname = `/lab${pathname}`;
+      return NextResponse.rewrite(rewritten);
+    }
+
+    // Fallback for any other paths (backward compatibility)
+    rewritten.pathname = `/lab/now2025${pathname}`;
     return NextResponse.rewrite(rewritten);
   }
 

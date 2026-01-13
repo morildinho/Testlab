@@ -1,9 +1,17 @@
 import type { Metadata } from "next";
 import { list } from "@vercel/blob";
 import Link from "next/link";
+import { headers } from "next/headers";
 import GalleryClient from "./gallery-client";
 
 export const dynamic = "force-dynamic";
+
+// Returns base path based on host: "/now2025" for highlights.nowla.org, "/lab/now2025" for others
+async function getBasePath() {
+  const headersList = await headers();
+  const host = headersList.get("host") || "";
+  return host === "highlights.nowla.org" ? "/now2025" : "/lab/now2025";
+}
 
 export const metadata: Metadata = {
   title: "Album – NOWLA 2025",
@@ -67,6 +75,7 @@ interface PageProps {
 export default async function AlbumPage({ params }: PageProps) {
   const { album } = await params;
   const images = await getAlbumImages(album);
+  const basePath = await getBasePath();
 
   const albumDisplayName = album.replace(/-/g, " ");
 
@@ -193,7 +202,7 @@ export default async function AlbumPage({ params }: PageProps) {
             className="hero-logo"
           />
           <nav className="breadcrumb">
-            <Link href="/lab/now2025">Albums</Link>
+            <Link href={basePath}>Albums</Link>
             <span className="breadcrumb-sep">/</span>
             <span className="breadcrumb-current">{albumDisplayName}</span>
           </nav>
