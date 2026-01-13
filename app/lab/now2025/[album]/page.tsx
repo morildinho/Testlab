@@ -92,6 +92,12 @@ export default async function AlbumPage({ params }: PageProps) {
           background: linear-gradient(180deg, rgba(0, 0, 0, 0.2) 0%, transparent 100%);
         }
 
+        .hero-logo {
+          width: clamp(140px, 30vw, 240px);
+          height: auto;
+          margin-bottom: 1rem;
+        }
+
         .breadcrumb {
           font-size: 0.9rem;
           margin-bottom: 1rem;
@@ -181,6 +187,11 @@ export default async function AlbumPage({ params }: PageProps) {
 
       <div className="page">
         <header className="hero">
+          <img
+            src="/images/NOW_white.webp"
+            alt="NOW"
+            className="hero-logo"
+          />
           <nav className="breadcrumb">
             <Link href="/lab/now2025">Albums</Link>
             <span className="breadcrumb-sep">/</span>
