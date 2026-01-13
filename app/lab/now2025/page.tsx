@@ -285,7 +285,7 @@ export default async function AlbumIndexPage() {
                 Get started by uploading your first photos. Albums are created
                 automatically based on the folder structure.
               </p>
-              <Link href="/lab/now2025/upload" className="empty-link">
+              <Link href="upload" className="empty-link">
                 <span>+</span> Upload Your First Photos
               </Link>
             </div>
@@ -294,7 +294,7 @@ export default async function AlbumIndexPage() {
               {albums.map((album) => (
                 <Link
                   key={album.slug}
-                  href={`/${album.slug}`}
+                  href={album.slug}
                   className="album-card"
                 >
                   <img
