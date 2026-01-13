@@ -188,7 +188,7 @@ export default async function AlbumPage({ params }: PageProps) {
       <div className="page">
         <header className="hero">
           <img
-            src="/images/now-logo.svg"
+            src="/images/NOW_white.webp"
             alt="NOW Nordic OFFC"
             className="hero-logo"
           />
