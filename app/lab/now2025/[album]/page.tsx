@@ -28,7 +28,11 @@ export default async function AlbumPage({
 
 const images = blobs
   .filter((b) => /\.(jpg|jpeg|png|webp|gif)$/i.test(b.pathname))
-  .sort((a, b) => (a.uploadedAt || "").localeCompare(b.uploadedAt || ""));
+  .sort((a, b) => {
+    const at = a.uploadedAt ? new Date(a.uploadedAt).getTime() : 0;
+    const bt = b.uploadedAt ? new Date(b.uploadedAt).getTime() : 0;
+    return at - bt;
+  });
 
   return (
     <main style={{ maxWidth: 1100, margin: "0 auto", padding: "3rem 1.5rem" }}>
