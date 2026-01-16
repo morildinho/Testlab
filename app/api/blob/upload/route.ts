@@ -16,9 +16,9 @@ export async function POST(request: Request) {
       request,
       body,
       onBeforeGenerateToken: async (pathname, clientPayload, multipart) => {
-        // Enkle “guardrails”
-        if (!pathname.startsWith("now2025/")) {
-          throw new Error("Invalid upload path. Must start with now2025/.");
+        // Enkle "guardrails" - allow paths like "now/2025/album/photo.jpg" or "now/2025-thumbnail.jpg"
+        if (!pathname.startsWith("now/")) {
+          throw new Error("Invalid upload path. Must start with now/.");
         }
 
         // valgfritt: hindre rot i root
