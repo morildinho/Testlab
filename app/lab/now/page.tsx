@@ -98,32 +98,48 @@ export default async function NowLandingPage() {
 
         .page {
           min-height: 100vh;
-          background: #ffffff;
-          color: #333;
+          background: linear-gradient(135deg, #006263 0%, #007c7c 100%);
+          color: #fff;
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         }
 
         .hero {
-          padding: 4rem 2rem;
+          padding: 2.5rem 2rem;
           text-align: center;
+          background: linear-gradient(180deg, rgba(0, 0, 0, 0.2) 0%, transparent 100%);
         }
 
         .hero-logo {
-          width: clamp(200px, 30vw, 300px);
+          width: clamp(140px, 30vw, 240px);
           height: auto;
-          margin-bottom: 2rem;
+          margin-bottom: 1rem;
+        }
+
+        .back-link {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+          color: rgba(255, 255, 255, 0.7);
+          text-decoration: none;
+          font-size: 0.9rem;
+          margin-bottom: 1rem;
+          transition: color 0.2s ease;
+        }
+
+        .back-link:hover {
+          color: #fff;
         }
 
         .hero-title {
-          font-size: clamp(2rem, 5vw, 3rem);
-          font-weight: 700;
-          color: #2d3748;
-          margin-bottom: 0.75rem;
+          font-size: clamp(1.75rem, 5vw, 2.75rem);
+          font-weight: 800;
+          letter-spacing: -0.02em;
+          margin-bottom: 0.5rem;
         }
 
         .hero-subtitle {
-          font-size: clamp(1rem, 2.5vw, 1.25rem);
-          color: #718096;
+          font-size: 0.95rem;
+          color: rgba(255, 255, 255, 0.7);
         }
 
         .container {
@@ -154,7 +170,7 @@ export default async function NowLandingPage() {
         .year-thumbnail {
           width: 100%;
           aspect-ratio: 16/9;
-          background: #E9A84A;
+          background: rgba(255, 255, 255, 0.15);
           border-radius: 24px;
           display: flex;
           align-items: center;
@@ -173,37 +189,41 @@ export default async function NowLandingPage() {
           margin-top: 1rem;
           font-size: 1.5rem;
           font-weight: 600;
-          color: #2d3748;
+          color: #fff;
         }
 
         .year-album-count {
           text-align: center;
           font-size: 0.9rem;
-          color: #718096;
+          color: rgba(255, 255, 255, 0.7);
           margin-top: 0.25rem;
         }
 
         .empty-state {
           text-align: center;
           padding: 4rem 2rem;
+          background: rgba(0, 0, 0, 0.15);
+          border-radius: 16px;
         }
 
         .empty-title {
-          font-size: 1.5rem;
+          font-size: 1.35rem;
           font-weight: 700;
-          color: #2d3748;
-          margin-bottom: 0.75rem;
+          margin-bottom: 0.5rem;
         }
 
         .empty-text {
-          color: #718096;
+          color: rgba(255, 255, 255, 0.7);
         }
       `}</style>
 
       <div className="page">
         <header className="hero">
+          <a href="https://nowla.org" className="back-link">
+            <span>←</span> Back to nowla.org
+          </a>
           <img
-            src="/images/now_black.webp"
+            src="/images/NOW_white.webp"
             alt="NOW - Nordic Opportunity Week"
             className="hero-logo"
           />

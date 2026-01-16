@@ -290,8 +290,11 @@ export default async function YearPage({ params }: PageProps) {
           <h1 className="hero-title">NOW {year}</h1>
           <p className="hero-subtitle">Photo Albums & Highlights</p>
           <div className="hero-links">
+            <a href="https://nowla.org" className="hero-link">
+              <span>←</span> Back to nowla.org
+            </a>
             <Link href={basePath || "/"} className="hero-link">
-              <span>←</span> All Years
+              All Years
             </Link>
           </div>
         </header>
