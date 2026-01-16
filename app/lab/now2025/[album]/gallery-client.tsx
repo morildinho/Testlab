@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import JSZip from "jszip";
 
 interface GalleryImage {
   url: string;
@@ -11,11 +12,24 @@ interface GalleryImage {
 
 interface GalleryClientProps {
   images: GalleryImage[];
+  albumName: string;
 }
 
-export default function GalleryClient({ images }: GalleryClientProps) {
+export default function GalleryClient({ images, albumName }: GalleryClientProps) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [shareMenuOpen, setShareMenuOpen] = useState(false);
+  const [albumShareMenuOpen, setAlbumShareMenuOpen] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState(0);
+  const [copied, setCopied] = useState(false);
+  const [albumCopied, setAlbumCopied] = useState(false);
+  const [canNativeShare, setCanNativeShare] = useState(false);
+
+  // Check for Web Share API support on mount
+  useEffect(() => {
+    setCanNativeShare(typeof navigator !== "undefined" && typeof navigator.share === "function");
+  }, []);
 
   const openLightbox = (index: number) => {
     setCurrentIndex(index);
@@ -24,14 +38,17 @@ export default function GalleryClient({ images }: GalleryClientProps) {
 
   const closeLightbox = () => {
     setLightboxOpen(false);
+    setShareMenuOpen(false);
   };
 
   const goToPrev = useCallback(() => {
     setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+    setShareMenuOpen(false);
   }, [images.length]);
 
   const goToNext = useCallback(() => {
     setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+    setShareMenuOpen(false);
   }, [images.length]);
 
   const handleDownload = async () => {
@@ -49,9 +66,126 @@ export default function GalleryClient({ images }: GalleryClientProps) {
       window.URL.revokeObjectURL(blobUrl);
     } catch (error) {
       console.error("Download failed:", error);
-      // Fallback: open in new tab
       window.open(image.url, "_blank");
     }
+  };
+
+  const handleDownloadAll = async () => {
+    if (downloading) return;
+    setDownloading(true);
+    setDownloadProgress(0);
+
+    try {
+      const zip = new JSZip();
+
+      for (let i = 0; i < images.length; i++) {
+        const image = images[i];
+        const response = await fetch(image.url);
+        const blob = await response.blob();
+        zip.file(image.filename, blob);
+        setDownloadProgress(Math.round(((i + 1) / images.length) * 100));
+      }
+
+      const zipBlob = await zip.generateAsync({ type: "blob" });
+      const blobUrl = window.URL.createObjectURL(zipBlob);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = `${albumName.replace(/\s+/g, "-")}-photos.zip`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error("Download all failed:", error);
+      alert("Failed to download photos. Please try again.");
+    } finally {
+      setDownloading(false);
+      setDownloadProgress(0);
+    }
+  };
+
+  const getCurrentPageUrl = () => {
+    if (typeof window !== "undefined") {
+      return window.location.href;
+    }
+    return "";
+  };
+
+  const getImageShareUrl = () => {
+    return images[currentIndex]?.url || "";
+  };
+
+  const handleNativeShare = async (isAlbum = false) => {
+    const url = isAlbum ? getCurrentPageUrl() : getImageShareUrl();
+    const title = isAlbum ? `${albumName} - NOWLA 2025` : images[currentIndex]?.filename;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title,
+          text: isAlbum ? `Check out this photo album: ${albumName}` : `Check out this photo from ${albumName}`,
+          url,
+        });
+      } catch (err) {
+        if ((err as Error).name !== "AbortError") {
+          console.error("Share failed:", err);
+        }
+      }
+    }
+    setShareMenuOpen(false);
+    setAlbumShareMenuOpen(false);
+  };
+
+  const handleFacebookShare = (isAlbum = false) => {
+    const url = isAlbum ? getCurrentPageUrl() : getImageShareUrl();
+    window.open(
+      `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
+      "_blank",
+      "width=600,height=400"
+    );
+    setShareMenuOpen(false);
+    setAlbumShareMenuOpen(false);
+  };
+
+  const handleXShare = (isAlbum = false) => {
+    const url = isAlbum ? getCurrentPageUrl() : getImageShareUrl();
+    const text = isAlbum ? `Check out this photo album: ${albumName}` : `Check out this photo from ${albumName}`;
+    window.open(
+      `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`,
+      "_blank",
+      "width=600,height=400"
+    );
+    setShareMenuOpen(false);
+    setAlbumShareMenuOpen(false);
+  };
+
+  const handleCopyLink = async (isAlbum = false) => {
+    const url = isAlbum ? getCurrentPageUrl() : getImageShareUrl();
+    try {
+      await navigator.clipboard.writeText(url);
+      if (isAlbum) {
+        setAlbumCopied(true);
+        setTimeout(() => setAlbumCopied(false), 2000);
+      } else {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }
+    } catch (err) {
+      console.error("Copy failed:", err);
+    }
+    setShareMenuOpen(false);
+    setAlbumShareMenuOpen(false);
+  };
+
+  const handleEmailShare = (isAlbum = false) => {
+    const url = isAlbum ? getCurrentPageUrl() : getImageShareUrl();
+    const subject = isAlbum ? `Photo Album: ${albumName}` : `Photo from ${albumName}`;
+    const body = isAlbum
+      ? `Check out this photo album:\n\n${url}`
+      : `Check out this photo:\n\n${url}`;
+    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    setShareMenuOpen(false);
+    setAlbumShareMenuOpen(false);
   };
 
   useEffect(() => {
@@ -60,7 +194,11 @@ export default function GalleryClient({ images }: GalleryClientProps) {
 
       switch (e.key) {
         case "Escape":
-          closeLightbox();
+          if (shareMenuOpen) {
+            setShareMenuOpen(false);
+          } else {
+            closeLightbox();
+          }
           break;
         case "ArrowLeft":
           goToPrev();
@@ -73,7 +211,7 @@ export default function GalleryClient({ images }: GalleryClientProps) {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [lightboxOpen, goToPrev, goToNext]);
+  }, [lightboxOpen, shareMenuOpen, goToPrev, goToNext]);
 
   useEffect(() => {
     if (lightboxOpen) {
@@ -86,9 +224,62 @@ export default function GalleryClient({ images }: GalleryClientProps) {
     };
   }, [lightboxOpen]);
 
+  // Close menus when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setAlbumShareMenuOpen(false);
+    };
+    if (albumShareMenuOpen) {
+      document.addEventListener("click", handleClickOutside);
+      return () => document.removeEventListener("click", handleClickOutside);
+    }
+  }, [albumShareMenuOpen]);
+
   return (
     <>
       <style>{`
+        .album-actions {
+          display: flex;
+          gap: 0.75rem;
+          margin-bottom: 1.5rem;
+          flex-wrap: wrap;
+          position: relative;
+        }
+
+        .album-btn {
+          background: rgba(255, 255, 255, 0.15);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          color: #fff;
+          padding: 0.75rem 1.25rem;
+          border-radius: 50px;
+          cursor: pointer;
+          font-size: 0.9rem;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          transition: all 0.2s ease;
+          font-family: inherit;
+        }
+
+        .album-btn:hover {
+          background: rgba(255, 255, 255, 0.25);
+          border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .album-btn:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+
+        .album-btn-download {
+          background: rgba(0, 150, 136, 0.3);
+          border-color: rgba(0, 150, 136, 0.5);
+        }
+
+        .album-btn-download:hover {
+          background: rgba(0, 150, 136, 0.5);
+        }
+
         .gallery-grid {
           display: grid;
           grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -213,6 +404,7 @@ export default function GalleryClient({ images }: GalleryClientProps) {
         .lightbox-actions {
           display: flex;
           gap: 0.75rem;
+          position: relative;
         }
 
         .lightbox-btn {
@@ -234,6 +426,14 @@ export default function GalleryClient({ images }: GalleryClientProps) {
           background: rgba(255, 255, 255, 0.2);
         }
 
+        .lightbox-btn-share {
+          background: rgba(59, 130, 246, 0.3);
+        }
+
+        .lightbox-btn-share:hover {
+          background: rgba(59, 130, 246, 0.5);
+        }
+
         .lightbox-btn-download {
           background: rgba(0, 150, 136, 0.3);
         }
@@ -248,6 +448,72 @@ export default function GalleryClient({ images }: GalleryClientProps) {
 
         .lightbox-close:hover {
           background: rgba(255, 100, 100, 0.3);
+        }
+
+        .share-menu {
+          position: absolute;
+          top: 100%;
+          right: 0;
+          margin-top: 0.5rem;
+          background: #1a1a1a;
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          border-radius: 12px;
+          padding: 0.5rem;
+          min-width: 200px;
+          z-index: 1001;
+          animation: slideDown 0.2s ease;
+        }
+
+        .share-menu-album {
+          left: 0;
+          right: auto;
+        }
+
+        @keyframes slideDown {
+          from { opacity: 0; transform: translateY(-10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        .share-option {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          width: 100%;
+          padding: 0.75rem 1rem;
+          border: none;
+          background: transparent;
+          color: #fff;
+          font-size: 0.9rem;
+          cursor: pointer;
+          border-radius: 8px;
+          transition: background 0.2s ease;
+          font-family: inherit;
+          text-align: left;
+        }
+
+        .share-option:hover {
+          background: rgba(255, 255, 255, 0.1);
+        }
+
+        .share-option-icon {
+          width: 24px;
+          height: 24px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 1.1rem;
+        }
+
+        .share-divider {
+          height: 1px;
+          background: rgba(255, 255, 255, 0.1);
+          margin: 0.5rem 0;
+        }
+
+        .share-note {
+          padding: 0.5rem 1rem;
+          font-size: 0.75rem;
+          color: rgba(255, 255, 255, 0.5);
         }
 
         .lightbox-content {
@@ -326,8 +592,76 @@ export default function GalleryClient({ images }: GalleryClientProps) {
           .lightbox-btn span.btn-text {
             display: none;
           }
+
+          .album-btn span.btn-text {
+            display: none;
+          }
+
+          .album-btn {
+            padding: 0.6rem 1rem;
+          }
         }
       `}</style>
+
+      {/* Album Actions */}
+      <div className="album-actions">
+        <div style={{ position: "relative" }}>
+          <button
+            className="album-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              setAlbumShareMenuOpen(!albumShareMenuOpen);
+            }}
+          >
+            <span>↗</span>
+            <span className="btn-text">Share Album</span>
+          </button>
+          {albumShareMenuOpen && (
+            <div className="share-menu share-menu-album" onClick={(e) => e.stopPropagation()}>
+              {canNativeShare && (
+                <>
+                  <button className="share-option" onClick={() => handleNativeShare(true)}>
+                    <span className="share-option-icon">📤</span>
+                    Share via...
+                  </button>
+                  <div className="share-divider" />
+                </>
+              )}
+              <button className="share-option" onClick={() => handleFacebookShare(true)}>
+                <span className="share-option-icon">f</span>
+                Facebook
+              </button>
+              <button className="share-option" onClick={() => handleXShare(true)}>
+                <span className="share-option-icon">𝕏</span>
+                X (Twitter)
+              </button>
+              <button className="share-option" onClick={() => handleEmailShare(true)}>
+                <span className="share-option-icon">✉</span>
+                Email
+              </button>
+              <div className="share-divider" />
+              <button className="share-option" onClick={() => handleCopyLink(true)}>
+                <span className="share-option-icon">{albumCopied ? "✓" : "🔗"}</span>
+                {albumCopied ? "Copied!" : "Copy Link"}
+              </button>
+              <div className="share-note">
+                Tip: For Instagram & TikTok, copy the link and share in the app
+              </div>
+            </div>
+          )}
+        </div>
+        <button
+          className="album-btn album-btn-download"
+          onClick={handleDownloadAll}
+          disabled={downloading}
+        >
+          <span>↓</span>
+          <span className="btn-text">
+            {downloading ? `Downloading ${downloadProgress}%` : "Download All"}
+          </span>
+          {downloading && <span>({downloadProgress}%)</span>}
+        </button>
+      </div>
 
       <div className="gallery-grid">
         {images.map((image, index) => (
@@ -373,6 +707,48 @@ export default function GalleryClient({ images }: GalleryClientProps) {
               </span>
             </div>
             <div className="lightbox-actions">
+              <div style={{ position: "relative" }}>
+                <button
+                  className="lightbox-btn lightbox-btn-share"
+                  onClick={() => setShareMenuOpen(!shareMenuOpen)}
+                >
+                  <span>↗</span>
+                  <span className="btn-text">Share</span>
+                </button>
+                {shareMenuOpen && (
+                  <div className="share-menu">
+                    {canNativeShare && (
+                      <>
+                        <button className="share-option" onClick={() => handleNativeShare(false)}>
+                          <span className="share-option-icon">📤</span>
+                          Share via...
+                        </button>
+                        <div className="share-divider" />
+                      </>
+                    )}
+                    <button className="share-option" onClick={() => handleFacebookShare(false)}>
+                      <span className="share-option-icon">f</span>
+                      Facebook
+                    </button>
+                    <button className="share-option" onClick={() => handleXShare(false)}>
+                      <span className="share-option-icon">𝕏</span>
+                      X (Twitter)
+                    </button>
+                    <button className="share-option" onClick={() => handleEmailShare(false)}>
+                      <span className="share-option-icon">✉</span>
+                      Email
+                    </button>
+                    <div className="share-divider" />
+                    <button className="share-option" onClick={() => handleCopyLink(false)}>
+                      <span className="share-option-icon">{copied ? "✓" : "🔗"}</span>
+                      {copied ? "Copied!" : "Copy Link"}
+                    </button>
+                    <div className="share-note">
+                      Tip: For Instagram & TikTok, copy the link and share in the app
+                    </div>
+                  </div>
+                )}
+              </div>
               <button
                 className="lightbox-btn lightbox-btn-download"
                 onClick={handleDownload}
