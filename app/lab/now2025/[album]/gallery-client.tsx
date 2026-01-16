@@ -24,6 +24,12 @@ export default function GalleryClient({ images, albumName }: GalleryClientProps)
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [copied, setCopied] = useState(false);
   const [albumCopied, setAlbumCopied] = useState(false);
+  const [canNativeShare, setCanNativeShare] = useState(false);
+
+  // Check for Web Share API support on mount
+  useEffect(() => {
+    setCanNativeShare(typeof navigator !== "undefined" && typeof navigator.share === "function");
+  }, []);
 
   const openLightbox = (index: number) => {
     setCurrentIndex(index);
@@ -612,7 +618,7 @@ export default function GalleryClient({ images, albumName }: GalleryClientProps)
           </button>
           {albumShareMenuOpen && (
             <div className="share-menu share-menu-album" onClick={(e) => e.stopPropagation()}>
-              {typeof navigator !== "undefined" && navigator.share && (
+              {canNativeShare && (
                 <>
                   <button className="share-option" onClick={() => handleNativeShare(true)}>
                     <span className="share-option-icon">📤</span>
@@ -711,7 +717,7 @@ export default function GalleryClient({ images, albumName }: GalleryClientProps)
                 </button>
                 {shareMenuOpen && (
                   <div className="share-menu">
-                    {typeof navigator !== "undefined" && navigator.share && (
+                    {canNativeShare && (
                       <>
                         <button className="share-option" onClick={() => handleNativeShare(false)}>
                           <span className="share-option-icon">📤</span>
