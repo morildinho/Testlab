@@ -145,15 +145,15 @@ export default async function AlbumPage({ params }: PageProps) {
         }
 
         .hero {
-          padding: 2.5rem 2rem;
+          padding: 3rem 2rem;
           text-align: center;
           background: linear-gradient(180deg, rgba(0, 0, 0, 0.2) 0%, transparent 100%);
         }
 
         .hero-logo {
-          width: clamp(140px, 30vw, 240px);
+          width: clamp(180px, 40vw, 320px);
           height: auto;
-          margin-bottom: 1rem;
+          margin-bottom: 1.5rem;
         }
 
         .breadcrumb {
@@ -183,7 +183,7 @@ export default async function AlbumPage({ params }: PageProps) {
         }
 
         .hero-title {
-          font-size: clamp(1.75rem, 5vw, 2.75rem);
+          font-size: clamp(2rem, 6vw, 3.5rem);
           font-weight: 800;
           letter-spacing: -0.02em;
           margin-bottom: 0.5rem;

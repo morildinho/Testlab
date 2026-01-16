@@ -104,42 +104,53 @@ export default async function NowLandingPage() {
         }
 
         .hero {
-          padding: 2.5rem 2rem;
+          padding: 3rem 2rem;
           text-align: center;
           background: linear-gradient(180deg, rgba(0, 0, 0, 0.2) 0%, transparent 100%);
         }
 
         .hero-logo {
-          width: clamp(140px, 30vw, 240px);
+          width: clamp(180px, 40vw, 320px);
           height: auto;
-          margin-bottom: 1rem;
-        }
-
-        .back-link {
-          display: inline-flex;
-          align-items: center;
-          gap: 0.5rem;
-          color: rgba(255, 255, 255, 0.7);
-          text-decoration: none;
-          font-size: 0.9rem;
-          margin-bottom: 1rem;
-          transition: color 0.2s ease;
-        }
-
-        .back-link:hover {
-          color: #fff;
+          margin-bottom: 1.5rem;
         }
 
         .hero-title {
-          font-size: clamp(1.75rem, 5vw, 2.75rem);
+          font-size: clamp(2rem, 6vw, 3.5rem);
           font-weight: 800;
           letter-spacing: -0.02em;
           margin-bottom: 0.5rem;
         }
 
         .hero-subtitle {
-          font-size: 0.95rem;
-          color: rgba(255, 255, 255, 0.7);
+          font-size: clamp(0.95rem, 2.5vw, 1.15rem);
+          color: rgba(255, 255, 255, 0.8);
+          margin-bottom: 1.5rem;
+        }
+
+        .hero-links {
+          display: flex;
+          gap: 1rem;
+          justify-content: center;
+          flex-wrap: wrap;
+        }
+
+        .hero-link {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+          color: #fff;
+          text-decoration: none;
+          font-size: 0.9rem;
+          padding: 0.65rem 1.25rem;
+          border: 1px solid rgba(255, 255, 255, 0.3);
+          border-radius: 50px;
+          transition: all 0.3s ease;
+        }
+
+        .hero-link:hover {
+          background: rgba(255, 255, 255, 0.1);
+          border-color: rgba(255, 255, 255, 0.5);
         }
 
         .container {
@@ -219,9 +230,6 @@ export default async function NowLandingPage() {
 
       <div className="page">
         <header className="hero">
-          <a href="https://nowla.org" className="back-link">
-            <span>←</span> Back to nowla.org
-          </a>
           <img
             src="/images/NOW_white.webp"
             alt="NOW - Nordic Opportunity Week"
@@ -229,6 +237,11 @@ export default async function NowLandingPage() {
           />
           <h1 className="hero-title">NOW Highlights</h1>
           <p className="hero-subtitle">See all the highlights from past NOW events</p>
+          <div className="hero-links">
+            <a href="https://nowla.org" className="hero-link">
+              <span>←</span> Back to nowla.org
+            </a>
+          </div>
         </header>
 
         <main className="container">
