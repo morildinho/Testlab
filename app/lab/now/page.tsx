@@ -39,8 +39,8 @@ async function getYears(): Promise<YearInfo[]> {
     });
 
     for (const blob of response.blobs) {
-      // Check for year thumbnail (now/2025-thumbnail.jpg)
-      const thumbnailMatch = blob.pathname.match(/^now\/(\d{4})-thumbnail\./);
+      // Check for year thumbnail (now/2025-thumbnail.jpg or now/2025-thumbnail-randomsuffix.jpg)
+      const thumbnailMatch = blob.pathname.match(/^now\/(\d{4})-thumbnail[^\/]*\./);
       if (thumbnailMatch) {
         const year = thumbnailMatch[1];
         const existing = yearMap.get(year) || { thumbnail: null, albums: new Set() };
