@@ -109,6 +109,15 @@ export default async function NowLandingPage() {
           background: linear-gradient(180deg, rgba(0, 0, 0, 0.2) 0%, transparent 100%);
         }
 
+        .hero-logo-link {
+          display: inline-block;
+          transition: opacity 0.2s ease;
+        }
+
+        .hero-logo-link:hover {
+          opacity: 0.85;
+        }
+
         .hero-logo {
           width: clamp(180px, 40vw, 320px);
           height: auto;
@@ -125,32 +134,6 @@ export default async function NowLandingPage() {
         .hero-subtitle {
           font-size: clamp(0.95rem, 2.5vw, 1.15rem);
           color: rgba(255, 255, 255, 0.8);
-          margin-bottom: 1.5rem;
-        }
-
-        .hero-links {
-          display: flex;
-          gap: 1rem;
-          justify-content: center;
-          flex-wrap: wrap;
-        }
-
-        .hero-link {
-          display: inline-flex;
-          align-items: center;
-          gap: 0.5rem;
-          color: #fff;
-          text-decoration: none;
-          font-size: 0.9rem;
-          padding: 0.65rem 1.25rem;
-          border: 1px solid rgba(255, 255, 255, 0.3);
-          border-radius: 50px;
-          transition: all 0.3s ease;
-        }
-
-        .hero-link:hover {
-          background: rgba(255, 255, 255, 0.1);
-          border-color: rgba(255, 255, 255, 0.5);
         }
 
         .container {
@@ -230,18 +213,15 @@ export default async function NowLandingPage() {
 
       <div className="page">
         <header className="hero">
-          <img
-            src="/images/NOW_white.webp"
-            alt="NOW - Nordic Opportunity Week"
-            className="hero-logo"
-          />
+          <a href="https://www.nowla.org/" className="hero-logo-link">
+            <img
+              src="/images/NOW_white.webp"
+              alt="NOW - Nordic Opportunity Week"
+              className="hero-logo"
+            />
+          </a>
           <h1 className="hero-title">NOW Highlights</h1>
           <p className="hero-subtitle">See all the highlights from past NOW events</p>
-          <div className="hero-links">
-            <a href="https://nowla.org" className="hero-link">
-              <span>←</span> Back to nowla.org
-            </a>
-          </div>
         </header>
 
         <main className="container">
