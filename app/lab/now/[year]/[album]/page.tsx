@@ -156,29 +156,6 @@ export default async function AlbumPage({ params }: PageProps) {
           margin-bottom: 1rem;
         }
 
-        .nav-links {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 1.5rem;
-          margin-bottom: 1rem;
-          flex-wrap: wrap;
-        }
-
-        .nav-link {
-          color: rgba(255, 255, 255, 0.7);
-          text-decoration: none;
-          font-size: 0.9rem;
-          transition: color 0.2s ease;
-          display: inline-flex;
-          align-items: center;
-          gap: 0.35rem;
-        }
-
-        .nav-link:hover {
-          color: #fff;
-        }
-
         .breadcrumb {
           font-size: 0.9rem;
           margin-bottom: 1rem;
@@ -216,6 +193,32 @@ export default async function AlbumPage({ params }: PageProps) {
         .hero-meta {
           font-size: 0.95rem;
           color: rgba(255, 255, 255, 0.7);
+          margin-bottom: 1.5rem;
+        }
+
+        .hero-links {
+          display: flex;
+          gap: 1rem;
+          justify-content: center;
+          flex-wrap: wrap;
+        }
+
+        .hero-link {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+          color: #fff;
+          text-decoration: none;
+          font-size: 0.9rem;
+          padding: 0.65rem 1.25rem;
+          border: 1px solid rgba(255, 255, 255, 0.3);
+          border-radius: 50px;
+          transition: all 0.3s ease;
+        }
+
+        .hero-link:hover {
+          background: rgba(255, 255, 255, 0.1);
+          border-color: rgba(255, 255, 255, 0.5);
         }
 
         .container {
@@ -268,14 +271,6 @@ export default async function AlbumPage({ params }: PageProps) {
 
       <div className="page">
         <header className="hero">
-          <nav className="nav-links">
-            <a href="https://nowla.org" className="nav-link">
-              <span>←</span> Back to nowla.org
-            </a>
-            <Link href={basePath || "/"} className="nav-link">
-              All Years
-            </Link>
-          </nav>
           <img
             src="/images/NOW_white.webp"
             alt="NOW"
@@ -292,6 +287,14 @@ export default async function AlbumPage({ params }: PageProps) {
           <p className="hero-meta">
             {images.length} photo{images.length !== 1 ? "s" : ""}
           </p>
+          <div className="hero-links">
+            <a href="https://nowla.org" className="hero-link">
+              <span>←</span> Back to nowla.org
+            </a>
+            <Link href={basePath || "/"} className="hero-link">
+              All Years
+            </Link>
+          </div>
         </header>
 
         <main className="container">
