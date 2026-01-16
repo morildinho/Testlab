@@ -5,45 +5,46 @@ export function middleware(req: NextRequest) {
   const host = req.headers.get("host") || "";
   const url = req.nextUrl;
 
-  // Kun for highlights.nowla.org
+  // Only for highlights.nowla.org
   if (host === "highlights.nowla.org") {
     const pathname = url.pathname;
 
-    // Ikke rør Next.js interne assets eller API
+    // Don't touch Next.js internal assets or API
     if (
       pathname.startsWith("/_next") ||
       pathname.startsWith("/api") ||
       pathname === "/favicon.ico" ||
       pathname.startsWith("/images") ||
       pathname.startsWith("/fonts") ||
-      pathname.startsWith("/lab/now2025")
+      pathname.startsWith("/lab/now")
     ) {
       return NextResponse.next();
     }
 
     const rewritten = url.clone();
 
-    // Root "/" -> "/lab/now2025"
-    if (pathname === "/" || pathname === "/now2025") {
-      rewritten.pathname = "/lab/now2025";
+    // Root "/" -> "/lab/now"
+    if (pathname === "/") {
+      rewritten.pathname = "/lab/now";
       return NextResponse.rewrite(rewritten);
     }
 
-    // /now2025/* -> /lab/now2025/*
-    if (pathname.startsWith("/now2025/")) {
-      rewritten.pathname = `/lab${pathname}`;
+    // Year paths: /2025, /2024 -> /lab/now/2025, /lab/now/2024
+    const yearMatch = pathname.match(/^\/(\d{4})(\/.*)?$/);
+    if (yearMatch) {
+      rewritten.pathname = `/lab/now${pathname}`;
       return NextResponse.rewrite(rewritten);
     }
 
-    // Fallback for any other paths (backward compatibility)
-    rewritten.pathname = `/lab/now2025${pathname}`;
+    // Fallback: prepend /lab/now to any other paths
+    rewritten.pathname = `/lab/now${pathname}`;
     return NextResponse.rewrite(rewritten);
   }
 
   return NextResponse.next();
 }
 
-// Sørg for at middleware kjører på "vanlige" paths
+// Ensure middleware runs on regular paths
 export const config = {
   matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };
