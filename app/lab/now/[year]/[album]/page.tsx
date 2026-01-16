@@ -156,6 +156,29 @@ export default async function AlbumPage({ params }: PageProps) {
           margin-bottom: 1rem;
         }
 
+        .nav-links {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 1.5rem;
+          margin-bottom: 1rem;
+          flex-wrap: wrap;
+        }
+
+        .nav-link {
+          color: rgba(255, 255, 255, 0.7);
+          text-decoration: none;
+          font-size: 0.9rem;
+          transition: color 0.2s ease;
+          display: inline-flex;
+          align-items: center;
+          gap: 0.35rem;
+        }
+
+        .nav-link:hover {
+          color: #fff;
+        }
+
         .breadcrumb {
           font-size: 0.9rem;
           margin-bottom: 1rem;
@@ -245,6 +268,14 @@ export default async function AlbumPage({ params }: PageProps) {
 
       <div className="page">
         <header className="hero">
+          <nav className="nav-links">
+            <a href="https://nowla.org" className="nav-link">
+              <span>←</span> Back to nowla.org
+            </a>
+            <Link href={basePath || "/"} className="nav-link">
+              All Years
+            </Link>
+          </nav>
           <img
             src="/images/NOW_white.webp"
             alt="NOW"
