@@ -11,11 +11,10 @@ type UploadResult = {
 function slugify(input: string) {
   return input
     .trim()
-    .toLowerCase()
-    .replace(/æ/g, "ae")
-    .replace(/ø/g, "o")
-    .replace(/å/g, "a")
-    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/æ/gi, "ae")
+    .replace(/ø/gi, "o")
+    .replace(/å/gi, "a")
+    .replace(/[^a-zA-Z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 }
 
