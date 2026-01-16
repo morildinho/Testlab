@@ -106,13 +106,19 @@ export default function GalleryClient({ images, albumName }: GalleryClientProps)
 
   const getCurrentPageUrl = () => {
     if (typeof window !== "undefined") {
-      return window.location.href;
+      // Return base URL without query params
+      return window.location.origin + window.location.pathname;
     }
     return "";
   };
 
   const getImageShareUrl = () => {
-    return images[currentIndex]?.url || "";
+    // Share album page URL with photo index as query param for proper OG tags
+    if (typeof window !== "undefined") {
+      const baseUrl = window.location.origin + window.location.pathname;
+      return `${baseUrl}?photo=${currentIndex}`;
+    }
+    return "";
   };
 
   const handleNativeShare = async (isAlbum = false) => {

@@ -13,14 +13,6 @@ async function getBasePath() {
   return host === "highlights.nowla.org" ? "/now2025" : "/lab/now2025";
 }
 
-export const metadata: Metadata = {
-  title: "Album – NOWLA 2025",
-  robots: {
-    index: false,
-    follow: false,
-  },
-};
-
 export interface GalleryImage {
   url: string;
   pathname: string;
@@ -66,6 +58,63 @@ async function getAlbumImages(albumSlug: string): Promise<GalleryImage[]> {
   images.sort((a, b) => b.uploadedAt.getTime() - a.uploadedAt.getTime());
 
   return images;
+}
+
+// Dynamic metadata for Open Graph sharing
+interface MetadataProps {
+  params: Promise<{ album: string }>;
+  searchParams: Promise<{ photo?: string }>;
+}
+
+export async function generateMetadata({ params, searchParams }: MetadataProps): Promise<Metadata> {
+  const { album } = await params;
+  const { photo } = await searchParams;
+  const albumDisplayName = album.replace(/-/g, " ");
+
+  // Get images to find the specific photo if shared
+  const images = await getAlbumImages(album);
+  const photoIndex = photo ? parseInt(photo, 10) : null;
+  const specificPhoto = photoIndex !== null && images[photoIndex] ? images[photoIndex] : null;
+
+  // Use specific photo or first image as thumbnail
+  const ogImage = specificPhoto?.url || images[0]?.url || "/images/NOW_white.webp";
+
+  const title = specificPhoto
+    ? `Photo from ${albumDisplayName} – NOWLA 2025`
+    : `${albumDisplayName} – NOWLA 2025`;
+
+  const description = specificPhoto
+    ? `Check out this photo from the ${albumDisplayName} album at NOWLA 2025`
+    : `View photos from the ${albumDisplayName} album at NOWLA 2025`;
+
+  return {
+    title,
+    description,
+    robots: {
+      index: false,
+      follow: false,
+    },
+    openGraph: {
+      title,
+      description,
+      images: [
+        {
+          url: ogImage,
+          width: 1200,
+          height: 630,
+          alt: specificPhoto ? `Photo from ${albumDisplayName}` : albumDisplayName,
+        },
+      ],
+      type: "website",
+      siteName: "NOWLA 2025",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [ogImage],
+    },
+  };
 }
 
 interface PageProps {
