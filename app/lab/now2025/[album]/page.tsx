@@ -225,7 +225,7 @@ export default async function AlbumPage({ params }: PageProps) {
               </Link>
             </div>
           ) : (
-            <GalleryClient images={images} />
+            <GalleryClient images={images} albumName={albumDisplayName} />
           )}
         </main>
       </div>
