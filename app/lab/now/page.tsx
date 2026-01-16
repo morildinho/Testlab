@@ -203,12 +203,9 @@ export default async function NowLandingPage() {
       <div className="page">
         <header className="hero">
           <img
-            src="/images/NOW_logo_dark.png"
+            src="/images/now_black.webp"
             alt="NOW - Nordic Opportunity Week"
             className="hero-logo"
-            onError={(e) => {
-              e.currentTarget.style.display = 'none';
-            }}
           />
           <h1 className="hero-title">NOW Highlights</h1>
           <p className="hero-subtitle">See all the highlights from past NOW events</p>
