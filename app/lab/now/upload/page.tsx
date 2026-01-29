@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { upload } from "@vercel/blob/client";
 
 type UploadResult = {
@@ -40,8 +40,20 @@ export default function UploadNowPage() {
   const [isSavingDescription, setIsSavingDescription] = useState(false);
   const [editResult, setEditResult] = useState<string | null>(null);
 
+  // Reorder state
+  const [reorderYear, setReorderYear] = useState(currentYear.toString());
+  const [reorderAlbum, setReorderAlbum] = useState("");
+  const [isLoadingPhotos, setIsLoadingPhotos] = useState(false);
+  const [reorderPhotos, setReorderPhotos] = useState<{ url: string; filename: string }[]>([]);
+  const [existingDescription, setExistingDescription] = useState<string | null>(null);
+  const [isSavingOrder, setIsSavingOrder] = useState(false);
+  const [reorderResult, setReorderResult] = useState<string | null>(null);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+
   const albumSlug = useMemo(() => slugify(album) || "event-1", [album]);
   const editAlbumSlug = useMemo(() => slugify(editAlbum), [editAlbum]);
+  const reorderSlug = useMemo(() => slugify(reorderAlbum), [reorderAlbum]);
 
   async function onUploadPhotos() {
     setError(null);
@@ -91,6 +103,104 @@ export default function UploadNowPage() {
     }
   }
 
+  async function onLoadPhotos() {
+    setError(null);
+    setReorderResult(null);
+    setReorderPhotos([]);
+
+    if (!reorderSlug) {
+      setError("Enter an album name.");
+      return;
+    }
+
+    setIsLoadingPhotos(true);
+    try {
+      const res = await fetch(
+        `/api/blob/album-photos?year=${reorderYear}&album=${reorderSlug}`
+      );
+      if (!res.ok) throw new Error("Failed to load photos");
+      const data = await res.json();
+
+      if (data.images.length === 0) {
+        setError("No photos found in this album.");
+        return;
+      }
+
+      setReorderPhotos(data.images);
+      setExistingDescription(data.currentDescription);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setIsLoadingPhotos(false);
+    }
+  }
+
+  async function onSaveOrder() {
+    setError(null);
+    setReorderResult(null);
+
+    if (reorderPhotos.length === 0) {
+      setError("Load photos first.");
+      return;
+    }
+
+    setIsSavingOrder(true);
+    try {
+      const metadataObj: { description?: string; order: string[] } = {
+        order: reorderPhotos.map((p: { url: string; filename: string }) => p.filename),
+      };
+      if (existingDescription) {
+        metadataObj.description = existingDescription;
+      }
+
+      const metadata = JSON.stringify(metadataObj);
+      const metadataBlob = new Blob([metadata], { type: "application/json" });
+      const metadataFile = new File([metadataBlob], "metadata.json", { type: "application/json" });
+      const metadataPath = `now/${reorderYear}/${reorderSlug}/metadata.json`;
+
+      await upload(metadataPath, metadataFile, {
+        access: "public",
+        handleUploadUrl: "/api/blob/upload",
+        clientPayload: JSON.stringify({ type: "album-metadata", year: reorderYear, album: reorderSlug }),
+      });
+
+      setReorderResult("Photo order saved!");
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setIsSavingOrder(false);
+    }
+  }
+
+  function handleDragStart(index: number) {
+    setDragIndex(index);
+  }
+
+  function handleDragOver(e: React.DragEvent, index: number) {
+    e.preventDefault();
+    setDragOverIndex(index);
+  }
+
+  function handleDrop(index: number) {
+    if (dragIndex === null || dragIndex === index) {
+      setDragIndex(null);
+      setDragOverIndex(null);
+      return;
+    }
+
+    const updated = [...reorderPhotos];
+    const [dragged] = updated.splice(dragIndex, 1);
+    updated.splice(index, 0, dragged);
+    setReorderPhotos(updated);
+    setDragIndex(null);
+    setDragOverIndex(null);
+  }
+
+  function handleDragEnd() {
+    setDragIndex(null);
+    setDragOverIndex(null);
+  }
+
   async function onSaveDescription() {
     setError(null);
     setEditResult(null);
@@ -107,7 +217,22 @@ export default function UploadNowPage() {
 
     setIsSavingDescription(true);
     try {
-      const metadata = JSON.stringify({ description: editDescription.trim() });
+      // Fetch existing metadata to preserve order array
+      let existingOrder: string[] | null = null;
+      try {
+        const res = await fetch(`/api/blob/album-photos?year=${editYear}&album=${editAlbumSlug}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.currentOrder) existingOrder = data.currentOrder;
+        }
+      } catch {
+        // Ignore - save description without preserving order
+      }
+
+      const metadataObj: Record<string, unknown> = { description: editDescription.trim() };
+      if (existingOrder) metadataObj.order = existingOrder;
+
+      const metadata = JSON.stringify(metadataObj);
       const metadataBlob = new Blob([metadata], { type: "application/json" });
       const metadataFile = new File([metadataBlob], "metadata.json", { type: "application/json" });
       const metadataPath = `now/${editYear}/${editAlbumSlug}/metadata.json`;
@@ -446,6 +571,169 @@ export default function UploadNowPage() {
             </div>
           )}
         </div>
+      </section>
+
+      {/* Reorder Album Photos Section */}
+      <section style={{
+        background: "rgba(255,255,255,0.05)",
+        padding: 24,
+        borderRadius: 16,
+        marginTop: 32,
+        border: "1px solid rgba(255,255,255,0.1)"
+      }}>
+        <h2 style={{ fontSize: 18, marginBottom: 16 }}>Reorder Album Photos</h2>
+        <p style={{ opacity: 0.7, fontSize: 14, marginBottom: 16 }}>
+          Drag and drop photos to rearrange the order they appear in the album.
+        </p>
+
+        <div style={{ display: "grid", gap: 12 }}>
+          <label style={{ display: "grid", gap: 6 }}>
+            <span>Year:</span>
+            <select
+              value={reorderYear}
+              onChange={(e) => setReorderYear(e.target.value)}
+              style={{
+                padding: "10px 12px",
+                borderRadius: 10,
+                border: "1px solid rgba(255,255,255,0.15)",
+                background: "rgba(0,0,0,0.2)",
+                color: "inherit",
+              }}
+            >
+              {years.map((y) => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+          </label>
+
+          <label style={{ display: "grid", gap: 6 }}>
+            <span>Album Name:</span>
+            <input
+              value={reorderAlbum}
+              onChange={(e) => setReorderAlbum(e.target.value)}
+              placeholder="e.g. NOW come on MAAN"
+              style={{
+                padding: "10px 12px",
+                borderRadius: 10,
+                border: "1px solid rgba(255,255,255,0.15)",
+                background: "rgba(0,0,0,0.2)",
+                color: "inherit",
+              }}
+            />
+            {reorderSlug && (
+              <small style={{ opacity: 0.8 }}>
+                Album slug: <code>{reorderSlug}</code>
+              </small>
+            )}
+          </label>
+
+          <button
+            onClick={onLoadPhotos}
+            disabled={isLoadingPhotos || !reorderSlug}
+            style={{
+              padding: "12px 14px",
+              borderRadius: 12,
+              border: "1px solid rgba(255,255,255,0.18)",
+              background: isLoadingPhotos ? "rgba(255,255,255,0.08)" : "rgba(59,130,246,0.3)",
+              color: "inherit",
+              cursor: isLoadingPhotos || !reorderSlug ? "not-allowed" : "pointer",
+              fontWeight: 600,
+              opacity: !reorderSlug ? 0.5 : 1,
+            }}
+          >
+            {isLoadingPhotos ? "Loading..." : "Load Photos"}
+          </button>
+        </div>
+
+        {reorderPhotos.length > 0 && (
+          <div style={{ marginTop: 20 }}>
+            <p style={{ fontSize: 14, opacity: 0.8, marginBottom: 12 }}>
+              Drag photos to reorder. The order shown here is the order they will appear in the album.
+            </p>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))",
+                gap: 8,
+              }}
+            >
+              {reorderPhotos.map((photo: { url: string; filename: string }, index: number) => (
+                <div
+                  key={photo.filename}
+                  draggable
+                  onDragStart={() => handleDragStart(index)}
+                  onDragOver={(e) => handleDragOver(e, index)}
+                  onDragLeave={() => setDragOverIndex(null)}
+                  onDrop={() => handleDrop(index)}
+                  onDragEnd={handleDragEnd}
+                  style={{
+                    position: "relative",
+                    aspectRatio: "1",
+                    borderRadius: 8,
+                    overflow: "hidden",
+                    cursor: "grab",
+                    border: dragOverIndex === index
+                      ? "2px solid rgba(59,130,246,0.8)"
+                      : "2px solid transparent",
+                    opacity: dragIndex === index ? 0.4 : 1,
+                    transition: "border-color 0.15s ease, opacity 0.15s ease",
+                  }}
+                >
+                  <img
+                    src={photo.url}
+                    alt={photo.filename}
+                    draggable={false}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                      display: "block",
+                      pointerEvents: "none",
+                    }}
+                  />
+                  <div
+                    style={{
+                      position: "absolute",
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      background: "linear-gradient(transparent, rgba(0,0,0,0.7))",
+                      padding: "16px 6px 4px",
+                      fontSize: 10,
+                      color: "#fff",
+                    }}
+                  >
+                    {index + 1}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <button
+              onClick={onSaveOrder}
+              disabled={isSavingOrder}
+              style={{
+                marginTop: 16,
+                padding: "12px 14px",
+                borderRadius: 12,
+                border: "1px solid rgba(255,255,255,0.18)",
+                background: isSavingOrder ? "rgba(255,255,255,0.08)" : "rgba(0,150,136,0.3)",
+                color: "inherit",
+                cursor: isSavingOrder ? "not-allowed" : "pointer",
+                fontWeight: 600,
+                width: "100%",
+              }}
+            >
+              {isSavingOrder ? "Saving..." : "Save Order"}
+            </button>
+
+            {reorderResult && (
+              <div style={{ marginTop: 8, padding: 12, background: "rgba(0,150,136,0.2)", borderRadius: 8 }}>
+                <p style={{ fontSize: 14 }}>{reorderResult}</p>
+              </div>
+            )}
+          </div>
+        )}
       </section>
     </main>
   );

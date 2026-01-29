@@ -23,6 +23,7 @@ export interface GalleryImage {
 async function getAlbumImages(year: string, albumSlug: string): Promise<GalleryImage[]> {
   const images: GalleryImage[] = [];
   const imageExtensions = /\.(jpg|jpeg|png|webp|gif)$/i;
+  let metadataUrl: string | null = null;
 
   let cursor: string | undefined;
   do {
@@ -32,6 +33,12 @@ async function getAlbumImages(year: string, albumSlug: string): Promise<GalleryI
     });
 
     for (const blob of response.blobs) {
+      // Track metadata.json URL
+      if (blob.pathname.endsWith("metadata.json")) {
+        metadataUrl = blob.url;
+        continue;
+      }
+
       // Filter by image extension
       if (!imageExtensions.test(blob.pathname)) continue;
 
@@ -54,8 +61,37 @@ async function getAlbumImages(year: string, albumSlug: string): Promise<GalleryI
     cursor = response.cursor;
   } while (cursor);
 
-  // Sort by uploadedAt descending (newest first)
-  images.sort((a, b) => b.uploadedAt.getTime() - a.uploadedAt.getTime());
+  // Check for custom order in metadata.json
+  let orderArray: string[] | null = null;
+  if (metadataUrl) {
+    try {
+      const res = await fetch(metadataUrl, { cache: "no-store" });
+      if (res.ok) {
+        const meta = await res.json();
+        if (Array.isArray(meta.order) && meta.order.length > 0) {
+          orderArray = meta.order;
+        }
+      }
+    } catch {
+      // Ignore - fall back to date sort
+    }
+  }
+
+  if (orderArray) {
+    const orderMap = new Map<string, number>();
+    orderArray.forEach((filename, index) => orderMap.set(filename, index));
+
+    images.sort((a, b) => {
+      const aIdx = orderMap.get(a.filename);
+      const bIdx = orderMap.get(b.filename);
+      if (aIdx !== undefined && bIdx !== undefined) return aIdx - bIdx;
+      if (aIdx !== undefined) return -1;
+      if (bIdx !== undefined) return 1;
+      return b.uploadedAt.getTime() - a.uploadedAt.getTime();
+    });
+  } else {
+    images.sort((a, b) => b.uploadedAt.getTime() - a.uploadedAt.getTime());
+  }
 
   return images;
 }
