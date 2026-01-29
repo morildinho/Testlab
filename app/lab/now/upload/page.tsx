@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { upload } from "@vercel/blob/client";
 
 type UploadResult = {
@@ -43,6 +43,8 @@ export default function UploadNowPage() {
   // Reorder state
   const [reorderYear, setReorderYear] = useState(currentYear.toString());
   const [reorderAlbum, setReorderAlbum] = useState("");
+  const [availableAlbums, setAvailableAlbums] = useState<string[]>([]);
+  const [isLoadingAlbums, setIsLoadingAlbums] = useState(false);
   const [isLoadingPhotos, setIsLoadingPhotos] = useState(false);
   const [reorderPhotos, setReorderPhotos] = useState<{ url: string; filename: string }[]>([]);
   const [existingDescription, setExistingDescription] = useState<string | null>(null);
@@ -50,10 +52,16 @@ export default function UploadNowPage() {
   const [reorderResult, setReorderResult] = useState<string | null>(null);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [selectedIndices, setSelectedIndices] = useState<Set<number>>(new Set());
 
   const albumSlug = useMemo(() => slugify(album) || "event-1", [album]);
   const editAlbumSlug = useMemo(() => slugify(editAlbum), [editAlbum]);
-  const reorderSlug = useMemo(() => slugify(reorderAlbum), [reorderAlbum]);
+
+  // Load albums for reorder section on mount
+  useEffect(() => {
+    onLoadAlbums(reorderYear);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function onUploadPhotos() {
     setError(null);
@@ -103,20 +111,42 @@ export default function UploadNowPage() {
     }
   }
 
+  async function onLoadAlbums(yearValue: string) {
+    setReorderYear(yearValue);
+    setReorderAlbum("");
+    setReorderPhotos([]);
+    setSelectedIndices(new Set());
+    setReorderResult(null);
+    setAvailableAlbums([]);
+    setIsLoadingAlbums(true);
+    try {
+      const res = await fetch(`/api/blob/albums?year=${yearValue}`);
+      if (res.ok) {
+        const data = await res.json();
+        setAvailableAlbums(data.albums || []);
+      }
+    } catch {
+      // Ignore
+    } finally {
+      setIsLoadingAlbums(false);
+    }
+  }
+
   async function onLoadPhotos() {
     setError(null);
     setReorderResult(null);
     setReorderPhotos([]);
+    setSelectedIndices(new Set());
 
-    if (!reorderSlug) {
-      setError("Enter an album name.");
+    if (!reorderAlbum) {
+      setError("Select an album.");
       return;
     }
 
     setIsLoadingPhotos(true);
     try {
       const res = await fetch(
-        `/api/blob/album-photos?year=${reorderYear}&album=${reorderSlug}`
+        `/api/blob/album-photos?year=${reorderYear}&album=${reorderAlbum}`
       );
       if (!res.ok) throw new Error("Failed to load photos");
       const data = await res.json();
@@ -156,12 +186,12 @@ export default function UploadNowPage() {
       const metadata = JSON.stringify(metadataObj);
       const metadataBlob = new Blob([metadata], { type: "application/json" });
       const metadataFile = new File([metadataBlob], "metadata.json", { type: "application/json" });
-      const metadataPath = `now/${reorderYear}/${reorderSlug}/metadata.json`;
+      const metadataPath = `now/${reorderYear}/${reorderAlbum}/metadata.json`;
 
       await upload(metadataPath, metadataFile, {
         access: "public",
         handleUploadUrl: "/api/blob/upload",
-        clientPayload: JSON.stringify({ type: "album-metadata", year: reorderYear, album: reorderSlug }),
+        clientPayload: JSON.stringify({ type: "album-metadata", year: reorderYear, album: reorderAlbum }),
       });
 
       setReorderResult("Photo order saved!");
@@ -172,7 +202,20 @@ export default function UploadNowPage() {
     }
   }
 
+  function toggleSelect(index: number) {
+    setSelectedIndices((prev) => {
+      const next = new Set(prev);
+      if (next.has(index)) next.delete(index);
+      else next.add(index);
+      return next;
+    });
+  }
+
   function handleDragStart(index: number) {
+    // If dragging a non-selected photo, select only that one
+    if (!selectedIndices.has(index)) {
+      setSelectedIndices(new Set([index]));
+    }
     setDragIndex(index);
   }
 
@@ -182,16 +225,28 @@ export default function UploadNowPage() {
   }
 
   function handleDrop(index: number) {
-    if (dragIndex === null || dragIndex === index) {
+    if (dragIndex === null) {
       setDragIndex(null);
       setDragOverIndex(null);
       return;
     }
 
-    const updated = [...reorderPhotos];
-    const [dragged] = updated.splice(dragIndex, 1);
-    updated.splice(index, 0, dragged);
-    setReorderPhotos(updated);
+    const selected = selectedIndices.size > 0 ? selectedIndices : new Set([dragIndex]);
+    // Collect selected items in their current order
+    const selectedItems = Array.from(selected)
+      .sort((a, b) => a - b)
+      .map((i) => reorderPhotos[i]);
+    // Remove selected items
+    const remaining = reorderPhotos.filter((_, i) => !selected.has(i));
+    // Find the drop position in the remaining array
+    let dropPos = index;
+    // Adjust drop position: count how many selected items were before the drop index
+    const selectedBeforeDrop = Array.from(selected).filter((i) => i < index).length;
+    dropPos = index - selectedBeforeDrop;
+    // Insert selected items at the drop position
+    remaining.splice(dropPos, 0, ...selectedItems);
+    setReorderPhotos(remaining);
+    setSelectedIndices(new Set());
     setDragIndex(null);
     setDragOverIndex(null);
   }
@@ -583,7 +638,7 @@ export default function UploadNowPage() {
       }}>
         <h2 style={{ fontSize: 18, marginBottom: 16 }}>Reorder Album Photos</h2>
         <p style={{ opacity: 0.7, fontSize: 14, marginBottom: 16 }}>
-          Drag and drop photos to rearrange the order they appear in the album.
+          Select an album, then click photos to select multiple and drag to reorder.
         </p>
 
         <div style={{ display: "grid", gap: 12 }}>
@@ -591,7 +646,7 @@ export default function UploadNowPage() {
             <span>Year:</span>
             <select
               value={reorderYear}
-              onChange={(e) => setReorderYear(e.target.value)}
+              onChange={(e) => onLoadAlbums(e.target.value)}
               style={{
                 padding: "10px 12px",
                 borderRadius: 10,
@@ -607,38 +662,48 @@ export default function UploadNowPage() {
           </label>
 
           <label style={{ display: "grid", gap: 6 }}>
-            <span>Album Name:</span>
-            <input
+            <span>Album:</span>
+            <select
               value={reorderAlbum}
-              onChange={(e) => setReorderAlbum(e.target.value)}
-              placeholder="e.g. NOW come on MAAN"
+              onChange={(e) => {
+                setReorderAlbum(e.target.value);
+                setReorderPhotos([]);
+                setSelectedIndices(new Set());
+                setReorderResult(null);
+              }}
+              disabled={isLoadingAlbums}
               style={{
                 padding: "10px 12px",
                 borderRadius: 10,
                 border: "1px solid rgba(255,255,255,0.15)",
                 background: "rgba(0,0,0,0.2)",
                 color: "inherit",
+                opacity: isLoadingAlbums ? 0.5 : 1,
               }}
-            />
-            {reorderSlug && (
-              <small style={{ opacity: 0.8 }}>
-                Album slug: <code>{reorderSlug}</code>
-              </small>
-            )}
+            >
+              <option value="">
+                {isLoadingAlbums ? "Loading albums..." : availableAlbums.length === 0 ? "Select year first or no albums found" : "Select an album"}
+              </option>
+              {availableAlbums.map((slug) => (
+                <option key={slug} value={slug}>
+                  {slug.replace(/-/g, " ")}
+                </option>
+              ))}
+            </select>
           </label>
 
           <button
             onClick={onLoadPhotos}
-            disabled={isLoadingPhotos || !reorderSlug}
+            disabled={isLoadingPhotos || !reorderAlbum}
             style={{
               padding: "12px 14px",
               borderRadius: 12,
               border: "1px solid rgba(255,255,255,0.18)",
               background: isLoadingPhotos ? "rgba(255,255,255,0.08)" : "rgba(59,130,246,0.3)",
               color: "inherit",
-              cursor: isLoadingPhotos || !reorderSlug ? "not-allowed" : "pointer",
+              cursor: isLoadingPhotos || !reorderAlbum ? "not-allowed" : "pointer",
               fontWeight: 600,
-              opacity: !reorderSlug ? 0.5 : 1,
+              opacity: !reorderAlbum ? 0.5 : 1,
             }}
           >
             {isLoadingPhotos ? "Loading..." : "Load Photos"}
@@ -647,9 +712,43 @@ export default function UploadNowPage() {
 
         {reorderPhotos.length > 0 && (
           <div style={{ marginTop: 20 }}>
-            <p style={{ fontSize: 14, opacity: 0.8, marginBottom: 12 }}>
-              Drag photos to reorder. The order shown here is the order they will appear in the album.
-            </p>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+              <p style={{ fontSize: 14, opacity: 0.8 }}>
+                Click to select, then drag to move. {selectedIndices.size > 0 && `${selectedIndices.size} selected.`}
+              </p>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button
+                  onClick={() => setSelectedIndices(new Set(reorderPhotos.map((_, i) => i)))}
+                  style={{
+                    padding: "4px 10px",
+                    borderRadius: 6,
+                    border: "1px solid rgba(255,255,255,0.15)",
+                    background: "rgba(255,255,255,0.1)",
+                    color: "inherit",
+                    cursor: "pointer",
+                    fontSize: 12,
+                  }}
+                >
+                  Select All
+                </button>
+                {selectedIndices.size > 0 && (
+                  <button
+                    onClick={() => setSelectedIndices(new Set())}
+                    style={{
+                      padding: "4px 10px",
+                      borderRadius: 6,
+                      border: "1px solid rgba(255,255,255,0.15)",
+                      background: "rgba(255,255,255,0.1)",
+                      color: "inherit",
+                      cursor: "pointer",
+                      fontSize: 12,
+                    }}
+                  >
+                    Deselect
+                  </button>
+                )}
+              </div>
+            </div>
             <div
               style={{
                 display: "grid",
@@ -657,56 +756,87 @@ export default function UploadNowPage() {
                 gap: 8,
               }}
             >
-              {reorderPhotos.map((photo: { url: string; filename: string }, index: number) => (
-                <div
-                  key={photo.filename}
-                  draggable
-                  onDragStart={() => handleDragStart(index)}
-                  onDragOver={(e) => handleDragOver(e, index)}
-                  onDragLeave={() => setDragOverIndex(null)}
-                  onDrop={() => handleDrop(index)}
-                  onDragEnd={handleDragEnd}
-                  style={{
-                    position: "relative",
-                    aspectRatio: "1",
-                    borderRadius: 8,
-                    overflow: "hidden",
-                    cursor: "grab",
-                    border: dragOverIndex === index
-                      ? "2px solid rgba(59,130,246,0.8)"
-                      : "2px solid transparent",
-                    opacity: dragIndex === index ? 0.4 : 1,
-                    transition: "border-color 0.15s ease, opacity 0.15s ease",
-                  }}
-                >
-                  <img
-                    src={photo.url}
-                    alt={photo.filename}
-                    draggable={false}
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover",
-                      display: "block",
-                      pointerEvents: "none",
-                    }}
-                  />
+              {reorderPhotos.map((photo: { url: string; filename: string }, index: number) => {
+                const isSelected = selectedIndices.has(index);
+                const isDragging = dragIndex !== null && selectedIndices.has(dragIndex) ? isSelected : dragIndex === index;
+                return (
                   <div
+                    key={photo.filename}
+                    draggable
+                    onClick={(e) => {
+                      e.preventDefault();
+                      toggleSelect(index);
+                    }}
+                    onDragStart={() => handleDragStart(index)}
+                    onDragOver={(e) => handleDragOver(e, index)}
+                    onDragLeave={() => setDragOverIndex(null)}
+                    onDrop={() => handleDrop(index)}
+                    onDragEnd={handleDragEnd}
                     style={{
-                      position: "absolute",
-                      bottom: 0,
-                      left: 0,
-                      right: 0,
-                      background: "linear-gradient(transparent, rgba(0,0,0,0.7))",
-                      padding: "16px 6px 4px",
-                      fontSize: 10,
-                      color: "#fff",
+                      position: "relative",
+                      aspectRatio: "1",
+                      borderRadius: 8,
+                      overflow: "hidden",
+                      cursor: "grab",
+                      border: dragOverIndex === index
+                        ? "2px solid rgba(59,130,246,0.8)"
+                        : isSelected
+                          ? "2px solid rgba(59,130,246,0.6)"
+                          : "2px solid transparent",
+                      opacity: isDragging ? 0.4 : 1,
+                      transition: "border-color 0.15s ease, opacity 0.15s ease",
                     }}
                   >
-                    {index + 1}
+                    <img
+                      src={photo.url}
+                      alt={photo.filename}
+                      draggable={false}
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                        display: "block",
+                        pointerEvents: "none",
+                      }}
+                    />
+                    {isSelected && (
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: 4,
+                          right: 4,
+                          width: 20,
+                          height: 20,
+                          borderRadius: "50%",
+                          background: "rgba(59,130,246,0.9)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: 12,
+                          color: "#fff",
+                          fontWeight: 700,
+                        }}
+                      >
+                        &#10003;
+                      </div>
+                    )}
+                    <div
+                      style={{
+                        position: "absolute",
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        background: "linear-gradient(transparent, rgba(0,0,0,0.7))",
+                        padding: "16px 6px 4px",
+                        fontSize: 10,
+                        color: "#fff",
+                      }}
+                    >
+                      {index + 1}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <button
