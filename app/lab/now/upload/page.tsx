@@ -23,7 +23,11 @@ const years = Array.from({ length: 10 }, (_, i) => currentYear - i + 1);
 
 export default function UploadNowPage() {
   const [year, setYear] = useState(currentYear.toString());
-  const [album, setAlbum] = useState("event-1");
+  const [album, setAlbum] = useState("");
+  const [newAlbumName, setNewAlbumName] = useState("");
+  const [uploadAlbums, setUploadAlbums] = useState<string[]>([]);
+  const [isLoadingUploadAlbums, setIsLoadingUploadAlbums] = useState(false);
+  const [prefix, setPrefix] = useState("");
   const [description, setDescription] = useState("");
   const [files, setFiles] = useState<FileList | null>(null);
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
@@ -54,14 +58,34 @@ export default function UploadNowPage() {
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [selectedIndices, setSelectedIndices] = useState<Set<number>>(new Set());
 
-  const albumSlug = useMemo(() => slugify(album) || "event-1", [album]);
+  const albumSlug = useMemo(() => {
+    if (album === "__new__") return slugify(newAlbumName) || "new-album";
+    return album || "event-1";
+  }, [album, newAlbumName]);
   const editAlbumSlug = useMemo(() => slugify(editAlbum), [editAlbum]);
 
-  // Load albums for reorder section on mount
+  // Load albums for upload + reorder sections on mount
   useEffect(() => {
+    loadUploadAlbums(year);
     onLoadAlbums(reorderYear);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  async function loadUploadAlbums(yearValue: string) {
+    setUploadAlbums([]);
+    setIsLoadingUploadAlbums(true);
+    try {
+      const res = await fetch(`/api/blob/albums?year=${yearValue}`);
+      if (res.ok) {
+        const data = await res.json();
+        setUploadAlbums(data.albums || []);
+      }
+    } catch {
+      // Ignore
+    } finally {
+      setIsLoadingUploadAlbums(false);
+    }
+  }
 
   async function onUploadPhotos() {
     setError(null);
@@ -72,10 +96,22 @@ export default function UploadNowPage() {
       return;
     }
 
+    if (!albumSlug || albumSlug === "event-1" && album === "") {
+      setError("Select or create an album.");
+      return;
+    }
+
     setIsUploading(true);
     try {
-      const uploads = Array.from(files).map(async (file) => {
-        const pathname = `now/${year}/${albumSlug}/${file.name}`;
+      const fileArray = Array.from(files);
+      const uploads = fileArray.map(async (file, index) => {
+        let filename = file.name;
+        if (prefix.trim()) {
+          const ext = file.name.split(".").pop() || "jpg";
+          const num = String(index + 1).padStart(4, "0");
+          filename = `${prefix.trim()}_${num}.${ext}`;
+        }
+        const pathname = `now/${year}/${albumSlug}/${filename}`;
 
         const blob = await upload(pathname, file, {
           access: "public",
@@ -427,7 +463,11 @@ export default function UploadNowPage() {
             <span>Year:</span>
             <select
               value={year}
-              onChange={(e) => setYear(e.target.value)}
+              onChange={(e) => {
+                setYear(e.target.value);
+                setAlbum("");
+                loadUploadAlbums(e.target.value);
+              }}
               style={{
                 padding: "10px 12px",
                 borderRadius: 10,
@@ -443,23 +483,58 @@ export default function UploadNowPage() {
           </label>
 
           <label style={{ display: "grid", gap: 6 }}>
-            <span>Album Name:</span>
-            <input
+            <span>Album:</span>
+            <select
               value={album}
               onChange={(e) => setAlbum(e.target.value)}
-              placeholder="event-1"
+              disabled={isLoadingUploadAlbums}
               style={{
                 padding: "10px 12px",
                 borderRadius: 10,
                 border: "1px solid rgba(255,255,255,0.15)",
                 background: "rgba(0,0,0,0.2)",
                 color: "inherit",
+                opacity: isLoadingUploadAlbums ? 0.5 : 1,
               }}
-            />
-            <small style={{ opacity: 0.8 }}>
-              Preview: <code>/lab/now/{year}/{albumSlug}</code>
-            </small>
+            >
+              <option value="">
+                {isLoadingUploadAlbums ? "Loading albums..." : "Select an existing album"}
+              </option>
+              {uploadAlbums.map((slug) => (
+                <option key={slug} value={slug}>
+                  {slug.replace(/-/g, " ")}
+                </option>
+              ))}
+              <option value="__new__">+ Create new album</option>
+            </select>
           </label>
+
+          {album === "__new__" && (
+            <label style={{ display: "grid", gap: 6 }}>
+              <span>New Album Name:</span>
+              <input
+                value={newAlbumName}
+                onChange={(e) => setNewAlbumName(e.target.value)}
+                placeholder="e.g. NOW come on MAAN"
+                style={{
+                  padding: "10px 12px",
+                  borderRadius: 10,
+                  border: "1px solid rgba(255,255,255,0.15)",
+                  background: "rgba(0,0,0,0.2)",
+                  color: "inherit",
+                }}
+              />
+              <small style={{ opacity: 0.8 }}>
+                Slug: <code>{slugify(newAlbumName) || "..."}</code>
+              </small>
+            </label>
+          )}
+
+          {albumSlug && album && (
+            <small style={{ opacity: 0.8 }}>
+              Upload path: <code>/lab/now/{year}/{albumSlug}</code>
+            </small>
+          )}
 
           <label style={{ display: "grid", gap: 6 }}>
             <span>Description (optional):</span>
@@ -475,6 +550,27 @@ export default function UploadNowPage() {
                 color: "inherit",
               }}
             />
+          </label>
+
+          <label style={{ display: "grid", gap: 6 }}>
+            <span>Filename Prefix (optional):</span>
+            <input
+              value={prefix}
+              onChange={(e) => setPrefix(e.target.value)}
+              placeholder="e.g. NOW2025"
+              style={{
+                padding: "10px 12px",
+                borderRadius: 10,
+                border: "1px solid rgba(255,255,255,0.15)",
+                background: "rgba(0,0,0,0.2)",
+                color: "inherit",
+              }}
+            />
+            <small style={{ opacity: 0.7 }}>
+              {prefix.trim()
+                ? `Files will be renamed: ${prefix.trim()}_0001.jpg, ${prefix.trim()}_0002.jpg, ...`
+                : "Leave empty to keep original filenames."}
+            </small>
           </label>
 
           <label style={{ display: "grid", gap: 6 }}>
