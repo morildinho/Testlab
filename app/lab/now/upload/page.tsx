@@ -24,6 +24,7 @@ const years = Array.from({ length: 10 }, (_, i) => currentYear - i + 1);
 export default function UploadNowPage() {
   const [year, setYear] = useState(currentYear.toString());
   const [album, setAlbum] = useState("event-1");
+  const [description, setDescription] = useState("");
   const [files, setFiles] = useState<FileList | null>(null);
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -32,7 +33,15 @@ export default function UploadNowPage() {
   const [thumbnailResult, setThumbnailResult] = useState<UploadResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Edit description state
+  const [editYear, setEditYear] = useState(currentYear.toString());
+  const [editAlbum, setEditAlbum] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [isSavingDescription, setIsSavingDescription] = useState(false);
+  const [editResult, setEditResult] = useState<string | null>(null);
+
   const albumSlug = useMemo(() => slugify(album) || "event-1", [album]);
+  const editAlbumSlug = useMemo(() => slugify(editAlbum), [editAlbum]);
 
   async function onUploadPhotos() {
     setError(null);
@@ -59,11 +68,61 @@ export default function UploadNowPage() {
       });
 
       const completed = await Promise.all(uploads);
+
+      // Upload metadata.json with description if provided
+      if (description.trim()) {
+        const metadata = JSON.stringify({ description: description.trim() });
+        const metadataBlob = new Blob([metadata], { type: "application/json" });
+        const metadataFile = new File([metadataBlob], "metadata.json", { type: "application/json" });
+        const metadataPath = `now/${year}/${albumSlug}/metadata.json`;
+
+        await upload(metadataPath, metadataFile, {
+          access: "public",
+          handleUploadUrl: "/api/blob/upload",
+          clientPayload: JSON.stringify({ type: "album-metadata", year, album: albumSlug }),
+        });
+      }
+
       setResults(completed);
     } catch (e) {
       setError((e as Error).message);
     } finally {
       setIsUploading(false);
+    }
+  }
+
+  async function onSaveDescription() {
+    setError(null);
+    setEditResult(null);
+
+    if (!editAlbumSlug) {
+      setError("Enter an album name.");
+      return;
+    }
+
+    if (!editDescription.trim()) {
+      setError("Enter a description.");
+      return;
+    }
+
+    setIsSavingDescription(true);
+    try {
+      const metadata = JSON.stringify({ description: editDescription.trim() });
+      const metadataBlob = new Blob([metadata], { type: "application/json" });
+      const metadataFile = new File([metadataBlob], "metadata.json", { type: "application/json" });
+      const metadataPath = `now/${editYear}/${editAlbumSlug}/metadata.json`;
+
+      await upload(metadataPath, metadataFile, {
+        access: "public",
+        handleUploadUrl: "/api/blob/upload",
+        clientPayload: JSON.stringify({ type: "album-metadata", year: editYear, album: editAlbumSlug }),
+      });
+
+      setEditResult(`Description saved for ${editAlbumSlug}`);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setIsSavingDescription(false);
     }
   }
 
@@ -223,6 +282,22 @@ export default function UploadNowPage() {
           </label>
 
           <label style={{ display: "grid", gap: 6 }}>
+            <span>Description (optional):</span>
+            <input
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="A short description of this album"
+              style={{
+                padding: "10px 12px",
+                borderRadius: 10,
+                border: "1px solid rgba(255,255,255,0.15)",
+                background: "rgba(0,0,0,0.2)",
+                color: "inherit",
+              }}
+            />
+          </label>
+
+          <label style={{ display: "grid", gap: 6 }}>
             <span>Photos:</span>
             <input
               type="file"
@@ -276,6 +351,101 @@ export default function UploadNowPage() {
             </p>
           </div>
         )}
+      </section>
+
+      {/* Edit Album Description Section */}
+      <section style={{
+        background: "rgba(255,255,255,0.05)",
+        padding: 24,
+        borderRadius: 16,
+        marginTop: 32,
+        border: "1px solid rgba(255,255,255,0.1)"
+      }}>
+        <h2 style={{ fontSize: 18, marginBottom: 16 }}>Edit Album Description</h2>
+        <p style={{ opacity: 0.7, fontSize: 14, marginBottom: 16 }}>
+          Update or add a description for an existing album.
+        </p>
+
+        <div style={{ display: "grid", gap: 12 }}>
+          <label style={{ display: "grid", gap: 6 }}>
+            <span>Year:</span>
+            <select
+              value={editYear}
+              onChange={(e) => setEditYear(e.target.value)}
+              style={{
+                padding: "10px 12px",
+                borderRadius: 10,
+                border: "1px solid rgba(255,255,255,0.15)",
+                background: "rgba(0,0,0,0.2)",
+                color: "inherit",
+              }}
+            >
+              {years.map((y) => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+          </label>
+
+          <label style={{ display: "grid", gap: 6 }}>
+            <span>Album Name:</span>
+            <input
+              value={editAlbum}
+              onChange={(e) => setEditAlbum(e.target.value)}
+              placeholder="e.g. NOW come on MAAN"
+              style={{
+                padding: "10px 12px",
+                borderRadius: 10,
+                border: "1px solid rgba(255,255,255,0.15)",
+                background: "rgba(0,0,0,0.2)",
+                color: "inherit",
+              }}
+            />
+            {editAlbumSlug && (
+              <small style={{ opacity: 0.8 }}>
+                Album slug: <code>{editAlbumSlug}</code>
+              </small>
+            )}
+          </label>
+
+          <label style={{ display: "grid", gap: 6 }}>
+            <span>Description:</span>
+            <input
+              value={editDescription}
+              onChange={(e) => setEditDescription(e.target.value)}
+              placeholder="A short description of this album"
+              style={{
+                padding: "10px 12px",
+                borderRadius: 10,
+                border: "1px solid rgba(255,255,255,0.15)",
+                background: "rgba(0,0,0,0.2)",
+                color: "inherit",
+              }}
+            />
+          </label>
+
+          <button
+            onClick={onSaveDescription}
+            disabled={isSavingDescription || !editAlbumSlug}
+            style={{
+              padding: "12px 14px",
+              borderRadius: 12,
+              border: "1px solid rgba(255,255,255,0.18)",
+              background: isSavingDescription ? "rgba(255,255,255,0.08)" : "rgba(59,130,246,0.3)",
+              color: "inherit",
+              cursor: isSavingDescription || !editAlbumSlug ? "not-allowed" : "pointer",
+              fontWeight: 600,
+              opacity: !editAlbumSlug ? 0.5 : 1,
+            }}
+          >
+            {isSavingDescription ? "Saving..." : "Save Description"}
+          </button>
+
+          {editResult && (
+            <div style={{ marginTop: 8, padding: 12, background: "rgba(0,150,136,0.2)", borderRadius: 8 }}>
+              <p style={{ fontSize: 14 }}>{editResult}</p>
+            </div>
+          )}
+        </div>
       </section>
     </main>
   );

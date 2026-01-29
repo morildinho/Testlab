@@ -14,6 +14,7 @@ async function getBasePath() {
 
 interface AlbumInfo {
   slug: string;
+  description: string | null;
   imageCount: number;
   thumbnailUrl: string;
   latestUpload: Date;
@@ -22,7 +23,7 @@ interface AlbumInfo {
 async function getAlbums(year: string): Promise<AlbumInfo[]> {
   const albumMap = new Map<
     string,
-    { count: number; newestUrl: string; newestDate: Date }
+    { count: number; newestUrl: string; newestDate: Date; metadataUrl: string | null }
   >();
 
   const imageExtensions = /\.(jpg|jpeg|png|webp|gif)$/i;
@@ -35,14 +36,27 @@ async function getAlbums(year: string): Promise<AlbumInfo[]> {
     });
 
     for (const blob of response.blobs) {
-      // Skip non-image files
-      if (!imageExtensions.test(blob.pathname)) continue;
-
-      // Extract album name: now/2025/album-name/photo.jpg
       const parts = blob.pathname.split("/");
       if (parts.length < 4) continue;
 
       const albumSlug = parts[2];
+
+      // Track metadata.json files
+      if (blob.pathname.endsWith("metadata.json")) {
+        const existing = albumMap.get(albumSlug) || {
+          count: 0,
+          newestUrl: "",
+          newestDate: new Date(0),
+          metadataUrl: null,
+        };
+        existing.metadataUrl = blob.url;
+        albumMap.set(albumSlug, existing);
+        continue;
+      }
+
+      // Skip non-image files
+      if (!imageExtensions.test(blob.pathname)) continue;
+
       const uploadedAt =
         blob.uploadedAt instanceof Date
           ? blob.uploadedAt
@@ -60,6 +74,7 @@ async function getAlbums(year: string): Promise<AlbumInfo[]> {
           count: 1,
           newestUrl: blob.url,
           newestDate: uploadedAt,
+          metadataUrl: null,
         });
       }
     }
@@ -67,10 +82,33 @@ async function getAlbums(year: string): Promise<AlbumInfo[]> {
     cursor = response.cursor;
   } while (cursor);
 
+  // Fetch descriptions from metadata.json files
+  const metadataEntries = Array.from(albumMap.entries()).filter(
+    ([, data]) => data.metadataUrl !== null
+  );
+  const descriptions = new Map<string, string>();
+  await Promise.all(
+    metadataEntries.map(async ([slug, data]) => {
+      try {
+        const res = await fetch(data.metadataUrl!);
+        if (res.ok) {
+          const json = await res.json();
+          if (json.description) {
+            descriptions.set(slug, json.description);
+          }
+        }
+      } catch {
+        // Ignore fetch errors for metadata
+      }
+    })
+  );
+
   const albums: AlbumInfo[] = [];
   for (const [slug, data] of albumMap) {
+    if (data.count === 0) continue; // Skip albums with only metadata and no images
     albums.push({
       slug,
+      description: descriptions.get(slug) || null,
       imageCount: data.count,
       thumbnailUrl: data.newestUrl,
       latestUpload: data.newestDate,
@@ -225,7 +263,14 @@ export default async function YearPage({ params }: PageProps) {
         .album-name {
           font-size: 1.25rem;
           font-weight: 700;
+          margin-bottom: 0.25rem;
+        }
+
+        .album-description {
+          font-size: 0.9rem;
+          color: rgba(255, 255, 255, 0.7);
           margin-bottom: 0.5rem;
+          line-height: 1.4;
         }
 
         .album-meta {
@@ -335,6 +380,9 @@ export default async function YearPage({ params }: PageProps) {
                     <h2 className="album-name">
                       {album.slug.replace(/-/g, " ")}
                     </h2>
+                    {album.description && (
+                      <p className="album-description">{album.description}</p>
+                    )}
                     <div className="album-meta">
                       <span>
                         Updated{" "}

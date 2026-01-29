@@ -26,12 +26,18 @@ export async function POST(request: Request) {
           throw new Error("Invalid upload path.");
         }
 
-        return {
-          // Viktig: la Vercel legge til random suffix for å unngå kollisjoner
-          addRandomSuffix: true,
+        // Allow JSON for album metadata files
+        const isMetadata = pathname.endsWith("metadata.json");
+        const allowedTypes = isMetadata
+          ? ["application/json"]
+          : ALLOWED_IMAGE_TYPES;
 
-          allowedContentTypes: ALLOWED_IMAGE_TYPES,
-          maximumSizeInBytes: 25 * 1024 * 1024, // 25MB per bilde (juster ved behov)
+        return {
+          // Metadata files use exact path (allows overwrite on edit), images get random suffix
+          addRandomSuffix: !isMetadata,
+
+          allowedContentTypes: allowedTypes,
+          maximumSizeInBytes: isMetadata ? 1024 * 10 : 25 * 1024 * 1024, // 10KB for metadata, 25MB for images
 
           // Du kan bruke dette senere hvis du vil “logge” hvem/hvilket album
           tokenPayload: JSON.stringify({
