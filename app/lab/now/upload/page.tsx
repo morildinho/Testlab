@@ -57,6 +57,7 @@ export default function UploadNowPage() {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [selectedIndices, setSelectedIndices] = useState<Set<number>>(new Set());
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const albumSlug = useMemo(() => {
     if (album === "__new__") return slugify(newAlbumName) || "new-album";
@@ -290,6 +291,66 @@ export default function UploadNowPage() {
   function handleDragEnd() {
     setDragIndex(null);
     setDragOverIndex(null);
+  }
+
+  async function onDeleteSelected() {
+    if (selectedIndices.size === 0) {
+      setError("Select photos to delete.");
+      return;
+    }
+
+    const count = selectedIndices.size;
+    if (!window.confirm(`Delete ${count} photo${count !== 1 ? "s" : ""}? This cannot be undone.`)) {
+      return;
+    }
+
+    setError(null);
+    setReorderResult(null);
+    setIsDeleting(true);
+    try {
+      const urlsToDelete = Array.from(selectedIndices).map((i) => reorderPhotos[i].url);
+
+      const res = await fetch("/api/blob/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ urls: urlsToDelete }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to delete");
+      }
+
+      // Remove deleted photos from the list
+      const remaining = reorderPhotos.filter((_, i) => !selectedIndices.has(i));
+      setReorderPhotos(remaining);
+      setSelectedIndices(new Set());
+
+      // Auto-save updated order if photos remain
+      if (remaining.length > 0) {
+        const metadataObj: { description?: string; order: string[] } = {
+          order: remaining.map((p) => p.filename),
+        };
+        if (existingDescription) metadataObj.description = existingDescription;
+
+        const metadata = JSON.stringify(metadataObj);
+        const metadataBlob = new Blob([metadata], { type: "application/json" });
+        const metadataFile = new File([metadataBlob], "metadata.json", { type: "application/json" });
+        const metadataPath = `now/${reorderYear}/${reorderAlbum}/metadata.json`;
+
+        await upload(metadataPath, metadataFile, {
+          access: "public",
+          handleUploadUrl: "/api/blob/upload",
+          clientPayload: JSON.stringify({ type: "album-metadata", year: reorderYear, album: reorderAlbum }),
+        });
+      }
+
+      setReorderResult(`Deleted ${count} photo${count !== 1 ? "s" : ""}.`);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setIsDeleting(false);
+    }
   }
 
   async function onSaveDescription() {
@@ -828,20 +889,37 @@ export default function UploadNowPage() {
                   Select All
                 </button>
                 {selectedIndices.size > 0 && (
-                  <button
-                    onClick={() => setSelectedIndices(new Set())}
-                    style={{
-                      padding: "4px 10px",
-                      borderRadius: 6,
-                      border: "1px solid rgba(255,255,255,0.15)",
-                      background: "rgba(255,255,255,0.1)",
-                      color: "inherit",
-                      cursor: "pointer",
-                      fontSize: 12,
-                    }}
-                  >
-                    Deselect
-                  </button>
+                  <>
+                    <button
+                      onClick={() => setSelectedIndices(new Set())}
+                      style={{
+                        padding: "4px 10px",
+                        borderRadius: 6,
+                        border: "1px solid rgba(255,255,255,0.15)",
+                        background: "rgba(255,255,255,0.1)",
+                        color: "inherit",
+                        cursor: "pointer",
+                        fontSize: 12,
+                      }}
+                    >
+                      Deselect
+                    </button>
+                    <button
+                      onClick={onDeleteSelected}
+                      disabled={isDeleting}
+                      style={{
+                        padding: "4px 10px",
+                        borderRadius: 6,
+                        border: "1px solid rgba(220,38,38,0.4)",
+                        background: "rgba(220,38,38,0.2)",
+                        color: "#fca5a5",
+                        cursor: isDeleting ? "not-allowed" : "pointer",
+                        fontSize: 12,
+                      }}
+                    >
+                      {isDeleting ? "Deleting..." : `Delete (${selectedIndices.size})`}
+                    </button>
+                  </>
                 )}
               </div>
             </div>

@@ -33,10 +33,10 @@ export async function POST(request: Request) {
           : ALLOWED_IMAGE_TYPES;
 
         return {
-          // Metadata files use exact path (allows overwrite on edit), images get random suffix
-          addRandomSuffix: !isMetadata,
-          // Allow overwriting metadata files (description/order updates)
-          allowOverwrite: isMetadata,
+          // Use exact paths for all uploads (no random suffix appended)
+          addRandomSuffix: false,
+          // Allow overwriting existing files (re-uploads, metadata updates)
+          allowOverwrite: true,
 
           allowedContentTypes: allowedTypes,
           maximumSizeInBytes: isMetadata ? 1024 * 10 : 25 * 1024 * 1024, // 10KB for metadata, 25MB for images
