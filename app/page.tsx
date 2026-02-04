@@ -1,5 +1,5 @@
 export const metadata = {
-  title: "Morildinho AI Lab",
+  title: "Morildinho.no",
   robots: { index: false, follow: false },
 };
 
@@ -107,7 +107,7 @@ export default function Page() {
               color: "rgba(255,255,255,0.8)",
             }}
           >
-            AI PLAYGROUND
+            PLAYGROUND
           </h2>
         </div>
 
