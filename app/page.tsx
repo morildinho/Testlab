@@ -85,31 +85,19 @@ export default function Page() {
           Experimental AI Research Lab
         </p>
 
-        <div style={{ marginBottom: 24 }}>
-          <h1
-            style={{
-              margin: 0,
-              fontSize: "clamp(44px, 6vw, 96px)",
-              fontWeight: 800,
-              lineHeight: 0.95,
-              color: "rgba(255,255,255,0.9)",
-            }}
-          >
-            MORILDINHO&apos;S
-          </h1>
-          <h2
-            style={{
-              margin: 0,
-              marginTop: 8,
-              fontSize: "clamp(44px, 6vw, 96px)",
-              fontWeight: 800,
-              lineHeight: 0.95,
-              color: "rgba(255,255,255,0.8)",
-            }}
-          >
-            PLAYGROUND
-          </h2>
-        </div>
+        <h1
+          style={{
+            margin: 0,
+            marginBottom: 24,
+            fontSize: "clamp(44px, 6vw, 96px)",
+            fontWeight: 600,
+            lineHeight: 0.95,
+            color: "rgba(255,255,255,0.9)",
+            fontFamily: "'Gill Sans', 'Gill Sans MT', Calibri, sans-serif",
+          }}
+        >
+          MORILDINHO.NO
+        </h1>
 
         <div style={{ position: "relative" }}>
           <img
@@ -117,7 +105,7 @@ export default function Page() {
             alt="Morild Graffiti"
             loading="eager"
             style={{
-              width: "clamp(320px, 40vw, 560px)",
+              width: "clamp(380px, 50vw, 700px)",
               height: "auto",
               objectFit: "contain",
               mixBlendMode: "lighten",
