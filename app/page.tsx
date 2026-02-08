@@ -113,14 +113,20 @@ export default function Page() {
 
         <div style={{ position: "relative" }}>
           <img
-            src="/images/ai-mascot.png"
-            alt="AI Mascot"
+            src="/images/morild-graffiti.webp"
+            alt="Morild Graffiti"
             loading="eager"
             style={{
-              width: "clamp(256px, 28vw, 384px)",
+              width: "clamp(320px, 40vw, 560px)",
               height: "auto",
               objectFit: "contain",
-              filter: "drop-shadow(0 0 40px rgba(59,130,246,0.5))",
+              mixBlendMode: "lighten",
+              WebkitMaskImage:
+                "radial-gradient(ellipse 80% 70% at 50% 50%, black 40%, transparent 100%)",
+              maskImage:
+                "radial-gradient(ellipse 80% 70% at 50% 50%, black 40%, transparent 100%)",
+              filter:
+                "drop-shadow(0 0 40px rgba(59,130,246,0.5)) saturate(1.1)",
             }}
           />
         </div>
