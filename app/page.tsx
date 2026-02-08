@@ -5,6 +5,23 @@ export const metadata = {
 
 export default function Page() {
   return (
+    <>
+      <style>{`
+        .side-link {
+          color: rgba(255,255,255,0.75);
+          text-decoration: none;
+          font-weight: 600;
+          letter-spacing: 0.15em;
+          text-transform: uppercase;
+          font-family: 'Gill Sans', 'Gill Sans MT', Calibri, sans-serif;
+          transition: color 0.2s;
+          white-space: nowrap;
+          font-size: clamp(11px, 1.4vw, 16px);
+        }
+        .side-link:hover {
+          color: rgba(255,255,255,1);
+        }
+      `}</style>
     <div
       style={{
         minHeight: "100vh",
@@ -98,26 +115,7 @@ export default function Page() {
           }}
         >
           {/* Left link – Photo Gallery */}
-          <a
-            href="/gallery"
-            style={{
-              color: "rgba(255,255,255,0.75)",
-              textDecoration: "none",
-              fontSize: "clamp(11px, 1.4vw, 16px)",
-              fontWeight: 600,
-              letterSpacing: "0.15em",
-              textTransform: "uppercase",
-              fontFamily: "'Gill Sans', 'Gill Sans MT', Calibri, sans-serif",
-              transition: "color 0.2s",
-              whiteSpace: "nowrap",
-            }}
-            onMouseEnter={(e) =>
-              (e.currentTarget.style.color = "rgba(255,255,255,1)")
-            }
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.color = "rgba(255,255,255,0.75)")
-            }
-          >
+          <a href="/gallery" className="side-link">
             Photo Gallery
           </a>
 
@@ -147,25 +145,8 @@ export default function Page() {
             href="https://www.firemedia.no"
             target="_blank"
             rel="noopener noreferrer"
-            style={{
-              color: "rgba(255,255,255,0.75)",
-              textDecoration: "none",
-              fontSize: "clamp(11px, 1.4vw, 16px)",
-              fontWeight: 600,
-              letterSpacing: "0.15em",
-              textTransform: "uppercase",
-              fontFamily: "'Gill Sans', 'Gill Sans MT', Calibri, sans-serif",
-              lineHeight: 1.6,
-              textAlign: "center",
-              transition: "color 0.2s",
-              whiteSpace: "nowrap",
-            }}
-            onMouseEnter={(e) =>
-              (e.currentTarget.style.color = "rgba(255,255,255,1)")
-            }
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.color = "rgba(255,255,255,0.75)")
-            }
+            className="side-link"
+            style={{ lineHeight: 1.6, textAlign: "center" }}
           >
             Podcast
             <br />
@@ -209,5 +190,6 @@ export default function Page() {
         />
       </main>
     </div>
+    </>
   );
 }
