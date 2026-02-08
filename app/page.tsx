@@ -97,8 +97,10 @@ export default function Page() {
             fontSize: "clamp(32px, 4.5vw, 64px)",
             fontWeight: 600,
             lineHeight: 0.95,
-            color: "rgba(255,255,255,0.9)",
+            color: "rgba(255,255,255,0.75)",
             fontFamily: "'Gill Sans', 'Gill Sans MT', Calibri, sans-serif",
+            width: "100%",
+            textAlign: "center",
           }}
         >
           MORILDINHO.NO
