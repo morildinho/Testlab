@@ -73,23 +73,11 @@ export default function Page() {
           textAlign: "center",
         }}
       >
-        <p
-          style={{
-            fontSize: 12,
-            letterSpacing: "0.3em",
-            textTransform: "uppercase",
-            color: "rgba(255,255,255,0.65)",
-            marginBottom: 32,
-          }}
-        >
-          Experimental AI Research Lab
-        </p>
-
         <h1
           style={{
             margin: 0,
-            marginBottom: 24,
-            fontSize: "clamp(44px, 6vw, 96px)",
+            marginBottom: 32,
+            fontSize: "clamp(32px, 4.5vw, 64px)",
             fontWeight: 600,
             lineHeight: 0.95,
             color: "rgba(255,255,255,0.9)",
@@ -99,24 +87,92 @@ export default function Page() {
           MORILDINHO.NO
         </h1>
 
-        <div style={{ position: "relative" }}>
-          <img
-            src="/images/morild-graffiti.webp"
-            alt="Morild Graffiti"
-            loading="eager"
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "clamp(24px, 4vw, 64px)",
+            width: "100%",
+            maxWidth: 960,
+          }}
+        >
+          {/* Left link – Photo Gallery */}
+          <a
+            href="/gallery"
             style={{
-              width: "clamp(380px, 50vw, 700px)",
-              height: "auto",
-              objectFit: "contain",
-              mixBlendMode: "lighten",
-              WebkitMaskImage:
-                "radial-gradient(ellipse 80% 70% at 50% 50%, black 40%, transparent 100%)",
-              maskImage:
-                "radial-gradient(ellipse 80% 70% at 50% 50%, black 40%, transparent 100%)",
-              filter:
-                "drop-shadow(0 0 40px rgba(59,130,246,0.5)) saturate(1.1)",
+              color: "rgba(255,255,255,0.75)",
+              textDecoration: "none",
+              fontSize: "clamp(11px, 1.4vw, 16px)",
+              fontWeight: 600,
+              letterSpacing: "0.15em",
+              textTransform: "uppercase",
+              fontFamily: "'Gill Sans', 'Gill Sans MT', Calibri, sans-serif",
+              transition: "color 0.2s",
+              whiteSpace: "nowrap",
             }}
-          />
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.color = "rgba(255,255,255,1)")
+            }
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.color = "rgba(255,255,255,0.75)")
+            }
+          >
+            Photo Gallery
+          </a>
+
+          {/* Center image */}
+          <div style={{ position: "relative", flexShrink: 0 }}>
+            <img
+              src="/images/morild-graffiti.webp"
+              alt="Morild Graffiti"
+              loading="eager"
+              style={{
+                width: "clamp(380px, 50vw, 700px)",
+                height: "auto",
+                objectFit: "contain",
+                mixBlendMode: "lighten",
+                WebkitMaskImage:
+                  "radial-gradient(ellipse 80% 70% at 50% 50%, black 40%, transparent 100%)",
+                maskImage:
+                  "radial-gradient(ellipse 80% 70% at 50% 50%, black 40%, transparent 100%)",
+                filter:
+                  "drop-shadow(0 0 40px rgba(59,130,246,0.5)) saturate(1.1)",
+              }}
+            />
+          </div>
+
+          {/* Right link – Fire Media */}
+          <a
+            href="https://www.firemedia.no"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              color: "rgba(255,255,255,0.75)",
+              textDecoration: "none",
+              fontSize: "clamp(11px, 1.4vw, 16px)",
+              fontWeight: 600,
+              letterSpacing: "0.15em",
+              textTransform: "uppercase",
+              fontFamily: "'Gill Sans', 'Gill Sans MT', Calibri, sans-serif",
+              lineHeight: 1.6,
+              textAlign: "center",
+              transition: "color 0.2s",
+              whiteSpace: "nowrap",
+            }}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.color = "rgba(255,255,255,1)")
+            }
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.color = "rgba(255,255,255,0.75)")
+            }
+          >
+            Podcast
+            <br />
+            Video
+            <br />
+            Audio
+          </a>
         </div>
 
         {/* Bottom glow */}
