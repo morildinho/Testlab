@@ -7,18 +7,15 @@ export default function Page() {
   return (
     <>
       <style>{`
-        .side-link {
-          color: rgba(255,255,255,0.75);
+        .nav-link {
+          color: rgba(255,255,255,0.7);
           text-decoration: none;
-          font-weight: 600;
-          letter-spacing: 0.15em;
-          text-transform: uppercase;
+          font-size: 16px;
+          font-weight: 500;
           font-family: 'Gill Sans', 'Gill Sans MT', Calibri, sans-serif;
           transition: color 0.2s;
-          white-space: nowrap;
-          font-size: clamp(11px, 1.4vw, 16px);
         }
-        .side-link:hover {
+        .nav-link:hover {
           color: rgba(255,255,255,1);
         }
       `}</style>
@@ -31,166 +28,102 @@ export default function Page() {
           "radial-gradient(1200px 600px at 50% -10%, rgba(59,130,246,0.35), transparent 60%), radial-gradient(900px 500px at 10% 30%, rgba(59,130,246,0.15), transparent 60%), radial-gradient(900px 500px at 90% 70%, rgba(147,51,234,0.12), transparent 60%), #000",
       }}
     >
-      {/* Navigation */}
+      {/* Top left navigation */}
       <nav
         style={{
           position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
+          top: 24,
+          left: 24,
           zIndex: 50,
           display: "flex",
           alignItems: "center",
-          justifyContent: "space-between",
-          padding: "16px 24px",
-          background: "rgba(0,0,0,0.55)",
-          backdropFilter: "blur(10px)",
-          borderBottom: "1px solid rgba(255,255,255,0.08)",
+          gap: 32,
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
-          <img
-            src="/next.svg"
-            alt="Logo"
-            style={{
-              width: 32,
-              height: 32,
-              filter: "invert(1)",
-            }}
-          />
-          <span style={{ fontSize: 18, fontWeight: 700 }}>
-            Morildinho AI Lab
-          </span>
-          <div
-            style={{
-              display: "none",
-              gap: 18,
-              fontSize: 14,
-              color: "rgba(255,255,255,0.7)",
-            }}
-          >
-            <a href="#" style={{ color: "inherit", textDecoration: "none" }}>
-              About
-            </a>
-          </div>
-        </div>
-      </nav>
-
-      {/* Hero */}
-      <main
-        style={{
-          minHeight: "100vh",
-          paddingTop: 96,
-          paddingLeft: 16,
-          paddingRight: 16,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          textAlign: "center",
-        }}
-      >
-        <h1
-          style={{
-            margin: 0,
-            marginBottom: 32,
-            fontSize: "clamp(32px, 4.5vw, 64px)",
-            fontWeight: 600,
-            lineHeight: 0.95,
-            color: "rgba(255,255,255,0.75)",
-            fontFamily: "'Gill Sans', 'Gill Sans MT', Calibri, sans-serif",
-            width: "100%",
-            textAlign: "center",
-          }}
-        >
-          MORILDINHO.NO
-        </h1>
-
-        <div
+        <a href="/gallery" className="nav-link">
+          Portfolio
+        </a>
+        <a href="/om" className="nav-link">
+          Om Espen
+        </a>
+        <a
+          href="https://www.firemedia.no"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="nav-link"
           style={{
             display: "flex",
             alignItems: "center",
-            justifyContent: "center",
-            gap: "clamp(24px, 4vw, 64px)",
-            width: "100%",
-            maxWidth: 960,
+            gap: 8,
+            fontStyle: "italic",
+            fontWeight: 600,
           }}
         >
-          {/* Left link – Photo Gallery */}
-          <a href="/gallery" className="side-link">
-            Photo Gallery
-          </a>
+          FIRE
+        </a>
+      </nav>
 
-          {/* Center image */}
-          <div style={{ position: "relative", flexShrink: 0 }}>
-            <img
-              src="/images/morild-graffiti.webp"
-              alt="Morild Graffiti"
-              loading="eager"
-              style={{
-                width: "clamp(380px, 50vw, 700px)",
-                height: "auto",
-                objectFit: "contain",
-                mixBlendMode: "lighten",
-                WebkitMaskImage:
-                  "radial-gradient(ellipse 80% 70% at 50% 50%, black 40%, transparent 100%)",
-                maskImage:
-                  "radial-gradient(ellipse 80% 70% at 50% 50%, black 40%, transparent 100%)",
-                filter:
-                  "drop-shadow(0 0 40px rgba(59,130,246,0.5)) saturate(1.1)",
-              }}
-            />
-          </div>
-
-          {/* Right link – Fire Media */}
-          <a
-            href="https://www.firemedia.no"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="side-link"
-            style={{ lineHeight: 1.6, textAlign: "center" }}
-          >
-            Podcast
-            <br />
-            Video
-            <br />
-            Audio
-          </a>
-        </div>
-
-        {/* Bottom glow */}
-        <div
+      {/* Hero - Centered image */}
+      <main
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: 16,
+        }}
+      >
+        <img
+          src="/images/morild-graffiti.webp"
+          alt="Morild Graffiti"
+          loading="eager"
           style={{
-            position: "absolute",
-            bottom: 0,
-            left: "50%",
-            transform: "translateX(-50%)",
-            width: 384,
-            height: 192,
-            borderRadius: 9999,
-            filter: "blur(60px)",
-            opacity: 0.3,
-            background:
-              "radial-gradient(ellipse, rgba(59,130,246,1) 0%, transparent 70%)",
-          }}
-        />
-
-        {/* Ground line */}
-        <div
-          style={{
-            position: "absolute",
-            bottom: 96,
-            left: "50%",
-            transform: "translateX(-50%)",
-            width: 128,
-            height: 4,
-            borderRadius: 9999,
-            background:
-              "linear-gradient(90deg, transparent, rgba(59,130,246,1), transparent)",
-            boxShadow: "0 0 20px rgba(59,130,246,0.5)",
+            width: "clamp(380px, 50vw, 700px)",
+            height: "auto",
+            objectFit: "contain",
+            mixBlendMode: "lighten",
+            WebkitMaskImage:
+              "radial-gradient(ellipse 80% 70% at 50% 50%, black 40%, transparent 100%)",
+            maskImage:
+              "radial-gradient(ellipse 80% 70% at 50% 50%, black 40%, transparent 100%)",
+            filter:
+              "drop-shadow(0 0 40px rgba(59,130,246,0.5)) saturate(1.1)",
           }}
         />
       </main>
+
+      {/* Bottom glow */}
+      <div
+        style={{
+          position: "absolute",
+          bottom: 0,
+          left: "50%",
+          transform: "translateX(-50%)",
+          width: 384,
+          height: 192,
+          borderRadius: 9999,
+          filter: "blur(60px)",
+          opacity: 0.3,
+          background:
+            "radial-gradient(ellipse, rgba(59,130,246,1) 0%, transparent 70%)",
+        }}
+      />
+
+      {/* Ground line */}
+      <div
+        style={{
+          position: "absolute",
+          bottom: 96,
+          left: "50%",
+          transform: "translateX(-50%)",
+          width: 128,
+          height: 4,
+          borderRadius: 9999,
+          background:
+            "linear-gradient(90deg, transparent, rgba(59,130,246,1), transparent)",
+          boxShadow: "0 0 20px rgba(59,130,246,0.5)",
+        }}
+      />
     </div>
     </>
   );
