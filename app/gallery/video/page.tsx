@@ -26,7 +26,7 @@ async function getVideos(): Promise<BlobVideo[]> {
   const videos: BlobVideo[] = [];
   let cursor: string | undefined;
   do {
-    const response = await list({ prefix: "Video/", cursor });
+    const response = await list({ prefix: "Gallery/Video/", cursor });
     for (const blob of response.blobs) {
       if (!videoExtensions.test(blob.pathname)) continue;
       videos.push({

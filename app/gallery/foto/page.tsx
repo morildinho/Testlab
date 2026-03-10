@@ -23,7 +23,7 @@ async function getImages(): Promise<GalleryImage[]> {
   let cursor: string | undefined;
   do {
     const response = await list({
-      prefix: "Foto/",
+      prefix: "Gallery/Foto/",
       cursor,
     });
 
