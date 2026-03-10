@@ -163,12 +163,12 @@ export default function OmPage() {
 
           <h1 className="title">Om Espen Morild</h1>
           <p className="subtitle">
-            Podcast Producer & Video Editor med 25 års erfaring i digital kinoproduksjon og video/lydproduksjon.
+            Podcast- og videoprodusent med 25 års erfaring i digital kinoproduksjon og video/lydproduksjon.
           </p>
 
           <div className="content">
             <p>
-              Jeg er en Bergen-basert medieprodusent som brenner for lyd og bilde.
+              Jeg er en Bergensbasert medieprodusent som brenner for lyd og bilde.
               Med over to tiår i bransjen har jeg jobbet med alt fra podcaster og
               reklameproduksjon til live streaming og sosiale medier.
             </p>
@@ -177,8 +177,8 @@ export default function OmPage() {
             <ul>
               <li>Podcastproduksjon (full syklus: opptak, redigering, publisering)</li>
               <li>Videoredigering</li>
-              <li>Lydopptak og -redigering</li>
-              <li>Live streaming produksjon</li>
+              <li>Lydopptak og redigering</li>
+              <li>Live streaming</li>
               <li>Innhold for sosiale medier</li>
               <li>Fotografi</li>
             </ul>
@@ -187,14 +187,18 @@ export default function OmPage() {
             <p>
               Jeg er selvlært innen video- og lydredigering, og har bygget min kompetanse
               gjennom 25 år med praktisk erfaring i feltet. I dag jobber jeg som
-              Podcast Producer & Video Editor hos <span className="highlight">Fire Media</span> i Bergen.
+              podcast- og videoprodusent hos <span className="highlight">Fire Media</span> i Bergen.
+              Tidligere har jeg drevet mitt eget firma, Mainstream AS med fokus på podcast og video,
+              og jeg har vært podcastprodusent i innholdsbyrået Apriil Innhold. Ifølge mine midt på
+              treet regneferdigheter har jeg faktisk talt opp over 1000 produserte podcastepisoder.
             </p>
 
             <h2>Verktøy & teknologi</h2>
             <p>
-              Jeg jobber med profesjonell redigerings- og opptaksprogramvare for video og lyd,
-              samt designverktøy som Adobe Photoshop, Figma og Canva. For prosjektstyring
-              bruker jeg Notion og tilpassede CRM-løsninger.
+              Jeg jobber med profesjonell redigerings- og opptaksprogramvare som DaVinci Resolve,
+              Adobe Premiere, Audition og Logic Pro for video og lyd, og lager musikk på hobbybasis
+              i kjellerstuen. Jeg leker meg også med AI-verktøy som OpenClaw, Claude Code etc.
+              og har noen AI-prosjekter på si.
             </p>
 
             <h2>Kontakt</h2>
