@@ -23,7 +23,7 @@ interface AlbumInfo {
 async function getAlbums(year: string): Promise<AlbumInfo[]> {
   const albumMap = new Map<
     string,
-    { count: number; newestUrl: string; newestDate: Date; metadataUrl: string | null }
+    { count: number; newestUrl: string; newestDate: Date; metadataUrl: string | null; customThumbnailUrl: string | null }
   >();
 
   const imageExtensions = /\.(jpg|jpeg|png|webp|gif)$/i;
@@ -40,6 +40,7 @@ async function getAlbums(year: string): Promise<AlbumInfo[]> {
       if (parts.length < 4) continue;
 
       const albumSlug = parts[2];
+      const filename = parts[3];
 
       // Track metadata.json files
       if (blob.pathname.endsWith("metadata.json")) {
@@ -48,8 +49,23 @@ async function getAlbums(year: string): Promise<AlbumInfo[]> {
           newestUrl: "",
           newestDate: new Date(0),
           metadataUrl: null,
+          customThumbnailUrl: null,
         };
         existing.metadataUrl = blob.url;
+        albumMap.set(albumSlug, existing);
+        continue;
+      }
+
+      // Track dedicated thumbnail file (thumbnail.jpg / thumbnail.webp etc.)
+      if (/^thumbnail\./i.test(filename)) {
+        const existing = albumMap.get(albumSlug) || {
+          count: 0,
+          newestUrl: "",
+          newestDate: new Date(0),
+          metadataUrl: null,
+          customThumbnailUrl: null,
+        };
+        existing.customThumbnailUrl = blob.url;
         albumMap.set(albumSlug, existing);
         continue;
       }
@@ -75,6 +91,7 @@ async function getAlbums(year: string): Promise<AlbumInfo[]> {
           newestUrl: blob.url,
           newestDate: uploadedAt,
           metadataUrl: null,
+          customThumbnailUrl: null,
         });
       }
     }
@@ -110,7 +127,7 @@ async function getAlbums(year: string): Promise<AlbumInfo[]> {
       slug,
       description: descriptions.get(slug) || null,
       imageCount: data.count,
-      thumbnailUrl: data.newestUrl,
+      thumbnailUrl: data.customThumbnailUrl || data.newestUrl,
       latestUpload: data.newestDate,
     });
   }

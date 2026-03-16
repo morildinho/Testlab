@@ -37,6 +37,15 @@ export default function UploadNowPage() {
   const [thumbnailResult, setThumbnailResult] = useState<UploadResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Album thumbnail state
+  const [albumThumbYear, setAlbumThumbYear] = useState(currentYear.toString());
+  const [albumThumbAlbum, setAlbumThumbAlbum] = useState("");
+  const [albumThumbAlbums, setAlbumThumbAlbums] = useState<string[]>([]);
+  const [isLoadingAlbumThumbAlbums, setIsLoadingAlbumThumbAlbums] = useState(false);
+  const [albumThumbFile, setAlbumThumbFile] = useState<File | null>(null);
+  const [isUploadingAlbumThumb, setIsUploadingAlbumThumb] = useState(false);
+  const [albumThumbResult, setAlbumThumbResult] = useState<UploadResult | null>(null);
+
   // Delete album state
   const [deleteYear, setDeleteYear] = useState(currentYear.toString());
   const [deleteAlbum, setDeleteAlbum] = useState("");
@@ -79,6 +88,7 @@ export default function UploadNowPage() {
     loadUploadAlbums(year);
     onLoadAlbums(reorderYear);
     loadDeleteAlbums(deleteYear);
+    loadAlbumThumbAlbums(albumThumbYear);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -95,6 +105,56 @@ export default function UploadNowPage() {
       // Ignore
     } finally {
       setIsLoadingUploadAlbums(false);
+    }
+  }
+
+  async function loadAlbumThumbAlbums(yearValue: string) {
+    setAlbumThumbAlbums([]);
+    setAlbumThumbAlbum("");
+    setIsLoadingAlbumThumbAlbums(true);
+    try {
+      const res = await fetch(`/api/blob/albums?year=${yearValue}`);
+      if (res.ok) {
+        const data = await res.json();
+        setAlbumThumbAlbums(data.albums || []);
+      }
+    } catch {
+      // Ignore
+    } finally {
+      setIsLoadingAlbumThumbAlbums(false);
+    }
+  }
+
+  async function onUploadAlbumThumbnail() {
+    setError(null);
+    setAlbumThumbResult(null);
+
+    if (!albumThumbFile) {
+      setError("Select a thumbnail image.");
+      return;
+    }
+    if (!albumThumbAlbum) {
+      setError("Select an album.");
+      return;
+    }
+
+    setIsUploadingAlbumThumb(true);
+    try {
+      const ext = albumThumbFile.name.split(".").pop() || "jpg";
+      const pathname = `now/${albumThumbYear}/${albumThumbAlbum}/thumbnail.${ext}`;
+
+      const blob = await upload(pathname, albumThumbFile, {
+        access: "public",
+        handleUploadUrl: "/api/blob/upload",
+        multipart: true,
+        clientPayload: JSON.stringify({ type: "album-thumbnail", year: albumThumbYear, album: albumThumbAlbum }),
+      });
+
+      setAlbumThumbResult({ url: blob.url, pathname: blob.pathname });
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setIsUploadingAlbumThumb(false);
     }
   }
 
@@ -564,6 +624,103 @@ export default function UploadNowPage() {
             <div style={{ marginTop: 8, padding: 12, background: "rgba(0,150,136,0.2)", borderRadius: 8 }}>
               <p style={{ fontSize: 14 }}>Thumbnail uploaded for {year}!</p>
               <a href={thumbnailResult.url} target="_blank" rel="noreferrer" style={{ fontSize: 12, opacity: 0.8 }}>
+                View thumbnail
+              </a>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Album Thumbnail Section */}
+      <section style={{
+        background: "rgba(255,255,255,0.05)",
+        padding: 24,
+        borderRadius: 16,
+        marginBottom: 32,
+        border: "1px solid rgba(255,255,255,0.1)"
+      }}>
+        <h2 style={{ fontSize: 18, marginBottom: 16 }}>Album Thumbnail</h2>
+        <p style={{ opacity: 0.7, fontSize: 14, marginBottom: 16 }}>
+          Set a thumbnail image for a specific album card.
+        </p>
+
+        <div style={{ display: "grid", gap: 12 }}>
+          <label style={{ display: "grid", gap: 6 }}>
+            <span>Year:</span>
+            <select
+              value={albumThumbYear}
+              onChange={(e) => {
+                setAlbumThumbYear(e.target.value);
+                loadAlbumThumbAlbums(e.target.value);
+              }}
+              style={{
+                padding: "10px 12px",
+                borderRadius: 10,
+                border: "1px solid rgba(255,255,255,0.15)",
+                background: "rgba(0,0,0,0.2)",
+                color: "inherit",
+              }}
+            >
+              {years.map((y) => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+          </label>
+
+          <label style={{ display: "grid", gap: 6 }}>
+            <span>Album:</span>
+            <select
+              value={albumThumbAlbum}
+              onChange={(e) => setAlbumThumbAlbum(e.target.value)}
+              disabled={isLoadingAlbumThumbAlbums}
+              style={{
+                padding: "10px 12px",
+                borderRadius: 10,
+                border: "1px solid rgba(255,255,255,0.15)",
+                background: "rgba(0,0,0,0.2)",
+                color: "inherit",
+                opacity: isLoadingAlbumThumbAlbums ? 0.5 : 1,
+              }}
+            >
+              <option value="">
+                {isLoadingAlbumThumbAlbums ? "Loading albums..." : albumThumbAlbums.length === 0 ? "No albums found" : "Select an album"}
+              </option>
+              {albumThumbAlbums.map((slug) => (
+                <option key={slug} value={slug}>{slug.replace(/-/g, " ")}</option>
+              ))}
+            </select>
+          </label>
+
+          <label style={{ display: "grid", gap: 6 }}>
+            <span>Thumbnail Image:</span>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => setAlbumThumbFile(e.target.files?.[0] || null)}
+            />
+          </label>
+
+          <button
+            onClick={onUploadAlbumThumbnail}
+            disabled={isUploadingAlbumThumb || !albumThumbFile || !albumThumbAlbum}
+            style={{
+              padding: "12px 14px",
+              borderRadius: 12,
+              border: "1px solid rgba(255,255,255,0.18)",
+              background: isUploadingAlbumThumb ? "rgba(255,255,255,0.08)" : "rgba(59,130,246,0.3)",
+              color: "inherit",
+              cursor: isUploadingAlbumThumb || !albumThumbFile || !albumThumbAlbum ? "not-allowed" : "pointer",
+              fontWeight: 600,
+              opacity: !albumThumbFile || !albumThumbAlbum ? 0.5 : 1,
+            }}
+          >
+            {isUploadingAlbumThumb ? "Uploading..." : "Set Album Thumbnail"}
+          </button>
+
+          {albumThumbResult && (
+            <div style={{ marginTop: 8, padding: 12, background: "rgba(0,150,136,0.2)", borderRadius: 8 }}>
+              <p style={{ fontSize: 14 }}>Thumbnail set for {albumThumbAlbum}!</p>
+              <a href={albumThumbResult.url} target="_blank" rel="noreferrer" style={{ fontSize: 12, opacity: 0.8 }}>
                 View thumbnail
               </a>
             </div>
