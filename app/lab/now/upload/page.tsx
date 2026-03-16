@@ -37,6 +37,15 @@ export default function UploadNowPage() {
   const [thumbnailResult, setThumbnailResult] = useState<UploadResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Delete album state
+  const [deleteYear, setDeleteYear] = useState(currentYear.toString());
+  const [deleteAlbum, setDeleteAlbum] = useState("");
+  const [deleteAlbums, setDeleteAlbums] = useState<string[]>([]);
+  const [isLoadingDeleteAlbums, setIsLoadingDeleteAlbums] = useState(false);
+  const [isDeletingAlbum, setIsDeletingAlbum] = useState(false);
+  const [deleteAlbumResult, setDeleteAlbumResult] = useState<string | null>(null);
+  const [deleteAlbumError, setDeleteAlbumError] = useState<string | null>(null);
+
   // Edit description state
   const [editYear, setEditYear] = useState(currentYear.toString());
   const [editAlbum, setEditAlbum] = useState("");
@@ -69,6 +78,7 @@ export default function UploadNowPage() {
   useEffect(() => {
     loadUploadAlbums(year);
     onLoadAlbums(reorderYear);
+    loadDeleteAlbums(deleteYear);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -85,6 +95,57 @@ export default function UploadNowPage() {
       // Ignore
     } finally {
       setIsLoadingUploadAlbums(false);
+    }
+  }
+
+  async function loadDeleteAlbums(yearValue: string) {
+    setDeleteAlbums([]);
+    setDeleteAlbum("");
+    setIsLoadingDeleteAlbums(true);
+    try {
+      const res = await fetch(`/api/blob/albums?year=${yearValue}`);
+      if (res.ok) {
+        const data = await res.json();
+        setDeleteAlbums(data.albums || []);
+      }
+    } catch {
+      // Ignore
+    } finally {
+      setIsLoadingDeleteAlbums(false);
+    }
+  }
+
+  async function onDeleteAlbum() {
+    setDeleteAlbumError(null);
+    setDeleteAlbumResult(null);
+
+    if (!deleteAlbum) {
+      setDeleteAlbumError("Select an album to delete.");
+      return;
+    }
+
+    if (!window.confirm(`Delete the entire album "${deleteAlbum}" and all its photos? This cannot be undone.`)) {
+      return;
+    }
+
+    setIsDeletingAlbum(true);
+    try {
+      const res = await fetch("/api/blob/delete-album", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ year: deleteYear, album: deleteAlbum }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to delete album");
+
+      setDeleteAlbumResult(`Album "${deleteAlbum}" deleted (${data.deleted} files removed).`);
+      setDeleteAlbum("");
+      loadDeleteAlbums(deleteYear);
+    } catch (e) {
+      setDeleteAlbumError((e as Error).message);
+    } finally {
+      setIsDeletingAlbum(false);
     }
   }
 
@@ -780,6 +841,96 @@ export default function UploadNowPage() {
           {editResult && (
             <div style={{ marginTop: 8, padding: 12, background: "rgba(0,150,136,0.2)", borderRadius: 8 }}>
               <p style={{ fontSize: 14 }}>{editResult}</p>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Delete Album Section */}
+      <section style={{
+        background: "rgba(255,255,255,0.05)",
+        padding: 24,
+        borderRadius: 16,
+        marginTop: 32,
+        border: "1px solid rgba(220,38,38,0.2)"
+      }}>
+        <h2 style={{ fontSize: 18, marginBottom: 16 }}>Delete Album</h2>
+        <p style={{ opacity: 0.7, fontSize: 14, marginBottom: 16 }}>
+          Permanently delete an entire album and all its photos. This cannot be undone.
+        </p>
+
+        <div style={{ display: "grid", gap: 12 }}>
+          <label style={{ display: "grid", gap: 6 }}>
+            <span>Year:</span>
+            <select
+              value={deleteYear}
+              onChange={(e) => {
+                setDeleteYear(e.target.value);
+                loadDeleteAlbums(e.target.value);
+              }}
+              style={{
+                padding: "10px 12px",
+                borderRadius: 10,
+                border: "1px solid rgba(255,255,255,0.15)",
+                background: "rgba(0,0,0,0.2)",
+                color: "inherit",
+              }}
+            >
+              {years.map((y) => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+          </label>
+
+          <label style={{ display: "grid", gap: 6 }}>
+            <span>Album:</span>
+            <select
+              value={deleteAlbum}
+              onChange={(e) => setDeleteAlbum(e.target.value)}
+              disabled={isLoadingDeleteAlbums}
+              style={{
+                padding: "10px 12px",
+                borderRadius: 10,
+                border: "1px solid rgba(255,255,255,0.15)",
+                background: "rgba(0,0,0,0.2)",
+                color: "inherit",
+                opacity: isLoadingDeleteAlbums ? 0.5 : 1,
+              }}
+            >
+              <option value="">
+                {isLoadingDeleteAlbums ? "Loading albums..." : deleteAlbums.length === 0 ? "No albums found" : "Select an album to delete"}
+              </option>
+              {deleteAlbums.map((slug) => (
+                <option key={slug} value={slug}>
+                  {slug.replace(/-/g, " ")}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <button
+            onClick={onDeleteAlbum}
+            disabled={isDeletingAlbum || !deleteAlbum}
+            style={{
+              padding: "12px 14px",
+              borderRadius: 12,
+              border: "1px solid rgba(220,38,38,0.4)",
+              background: isDeletingAlbum || !deleteAlbum ? "rgba(255,255,255,0.05)" : "rgba(220,38,38,0.25)",
+              color: !deleteAlbum ? "inherit" : "#fca5a5",
+              cursor: isDeletingAlbum || !deleteAlbum ? "not-allowed" : "pointer",
+              fontWeight: 600,
+              opacity: !deleteAlbum ? 0.5 : 1,
+            }}
+          >
+            {isDeletingAlbum ? "Deleting..." : "Delete Album"}
+          </button>
+
+          {deleteAlbumError && (
+            <p style={{ color: "tomato", marginTop: 4 }}>{deleteAlbumError}</p>
+          )}
+          {deleteAlbumResult && (
+            <div style={{ marginTop: 4, padding: 12, background: "rgba(0,150,136,0.2)", borderRadius: 8 }}>
+              <p style={{ fontSize: 14 }}>{deleteAlbumResult}</p>
             </div>
           )}
         </div>
