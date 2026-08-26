@@ -10,6 +10,8 @@ export const metadata: Metadata = {
   alternates: { canonical: "/foto" },
 };
 
+export const revalidate = 60;
+
 export default async function FotoPage() {
   const series = await getSeries();
 

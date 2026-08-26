@@ -6,6 +6,8 @@ import SerieClient from "./serie-client";
 
 type Params = { params: Promise<{ serie: string }> };
 
+export const revalidate = 60;
+
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { serie } = await params;
   const s = await getSerie(serie);

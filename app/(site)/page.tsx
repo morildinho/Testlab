@@ -1,16 +1,19 @@
 import Link from "next/link";
-import { getSeries, site } from "@/lib/site";
+import { getHero, getSeries, site } from "@/lib/site";
 import Reveal from "./components/Reveal";
 import SeriesRow from "./components/SeriesRow";
 
+// Bildene kommer fra Blob — hent inn endringer innen et minutt.
+export const revalidate = 60;
+
 export default async function Home() {
-  const series = await getSeries();
+  const [series, hero] = await Promise.all([getSeries(), getHero()]);
 
   return (
     <div className="page">
       <div className="hero">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={site.hero.src} alt="" fetchPriority="high" />
+        <img src={hero.src} alt="" fetchPriority="high" />
         <div className="heroTxt">
           <div>
             <div className="mono dim" style={{ marginBottom: 18 }}>

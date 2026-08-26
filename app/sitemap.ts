@@ -3,6 +3,8 @@ import { getSeries } from "@/lib/site";
 
 const base = "https://morildinho.no";
 
+export const revalidate = 60;
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const series = await getSeries();
 

@@ -1,11 +1,12 @@
 // Innhold for morildinho.no.
 //
-// Bildene er foreløpig plassholdere som ligger i /public/photos. Når de ekte
-// bildene er lastet opp til Vercel Blob byttes `getSeries()` ut med et
-// Blob-kall — resten av siden rører vi ikke. Strukturen i Blob blir
-// `serier/<serie-id>/01_.jpg` osv., der filnavnet gir rekkefølgen, og
-// bredde/høyde leses fra en `metadata.json` per serie (skjelettene trenger
-// forholdet før bildet er lastet).
+// Fotoseriene leses fra Vercel Blob (se lib/blob-serier.ts og
+// opplastingssiden på /lab/serier). Så lenge Blob er tom faller siden tilbake
+// på plassholderbildene i /public/photos, slik at den ser komplett ut før
+// bildene er lastet opp.
+
+import { cache } from "react";
+import { listSerier, type BlobSerie } from "./blob-serier";
 
 export type Photo = {
   src: string;
@@ -54,10 +55,9 @@ export const site = {
   navn: "Espen Morild",
   ordmerke: "MORILDINHO",
   tagline: "Fotograf, podcast- og videoprodusent i Bergen.",
-  hero: photos.p1,
 };
 
-const series: Serie[] = [
+const placeholderSeries: Serie[] = [
   {
     id: "hjelle",
     nr: "01",
@@ -93,17 +93,51 @@ const videos: Video[] = [
   { id: "v3", title: "Bergenfest 2024 — Dag 3", meta: "", note: "", yt: "nvyUsYVXDR0" },
 ];
 
-export async function getSeries(): Promise<Serie[]> {
-  return series;
+function toSerie(s: BlobSerie, idx: number): Serie {
+  const photos: Photo[] = s.photos.map((p) => ({ src: p.url, w: p.w, h: p.h }));
+  const cover =
+    (s.meta.cover && photos[s.photos.findIndex((p) => p.filename === s.meta.cover)]) || photos[0] || null;
+
+  return {
+    id: s.meta.id,
+    nr: String(idx + 1).padStart(2, "0"),
+    title: s.meta.tittel,
+    meta: s.meta.ar,
+    note: s.meta.note,
+    cover,
+    photos,
+  };
+}
+
+/**
+ * Seriene siden viser. Cachet per request, så en side som slår opp seriene
+ * flere ganger (metadata + innhold) bare gjør ett Blob-oppslag.
+ */
+export const getSeries = cache(async (): Promise<Serie[]> => {
+  const fromBlob = await listSerier();
+
+  // Ingen bilder i Blob ennå → vis plassholderne.
+  if (!fromBlob.some((s) => s.photos.length > 0)) return placeholderSeries;
+
+  return fromBlob.map(toSerie);
+});
+
+/**
+ * Hero-bildet på forsiden: forsidebildet til den første serien. Rekkefølgen
+ * styres med "Sortering" på /lab/serier.
+ */
+export async function getHero(): Promise<Photo> {
+  const series = await getSeries();
+  return series.find((s) => s.cover)?.cover ?? photos.p1;
 }
 
 export async function getSerie(id: string): Promise<Serie | undefined> {
-  return series.find((s) => s.id === id);
+  return (await getSeries()).find((s) => s.id === id);
 }
 
 /** Serier som faktisk har bilder — brukes til "Neste serie"-sløyfen. */
 export async function getFilledSeries(): Promise<Serie[]> {
-  return series.filter((s) => s.photos.length > 0);
+  return (await getSeries()).filter((s) => s.photos.length > 0);
 }
 
 export async function getVideos(): Promise<Video[]> {

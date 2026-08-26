@@ -31,20 +31,37 @@ Designet kommer fra `design_handoff_morildinho` (Morildinho-Kino-v2).
   `app/layout.tsx` og eksponeres som CSS-variabler.
 - Innhold og bilder kommer fra `lib/site.ts`.
 
-## Bilder — plassholdere i dag, Vercel Blob senere
+## Bilder — Vercel Blob
 
-`lib/site.ts` peker i dag på plassholderbilder i `public/photos/`. Når de ekte
-bildene skal inn:
+Fotoseriene leses fra Blob. Er Blob tom, viser siden plassholderbildene i
+`public/photos/` — den ser altså komplett ut før noe er lastet opp.
 
-1. Last opp til Blob med én mappe per serie: `serier/<serie-id>/01_.jpg`,
-   `serier/<serie-id>/02_.jpg` … Filnavnet gir rekkefølgen.
-2. Lagre bredde/høyde per bilde i en `metadata.json` i samme mappe.
-   Skjelett-lastingen trenger `aspect-ratio` **før** bildet er lastet — uten
-   det hopper layouten. `list()` fra `@vercel/blob` returnerer ikke
-   bildedimensjoner, så de må lagres eksplisitt (samme mønster som
-   `/lab/now2025/upload` allerede bruker for rekkefølge og beskrivelse).
-3. Bytt ut `getSeries()` / `getSerie()` i `lib/site.ts` med Blob-kall. Resten
-   av siden trenger ingen endringer.
+Struktur:
 
-Prefiksene `Gallery/` og `now/` i Blob tilhører gammelt innhold og /lab — bruk
-`serier/` for nettsiden.
+```
+serier/<serie-id>/metadata.json
+serier/<serie-id>/01_bilde.jpg
+serier/<serie-id>/02_bilde.jpg
+```
+
+`metadata.json` holder tittel, år, beskrivelse, sortering, forsidebilde,
+rekkefølge og **bredde/høyde per bilde**. Dimensjonene må ligge der:
+`list()` fra `@vercel/blob` returnerer ikke bildestørrelse, og
+skjelett-lastingen trenger `aspect-ratio` før bildet er lastet for at
+layouten ikke skal hoppe. Opplastingssiden leser dem i nettleseren og
+skriver dem inn automatisk.
+
+Prefiksene `Gallery/` og `now/` i Blob tilhører gammelt innhold og `/lab` —
+nettsiden bruker kun `serier/`.
+
+### Opplasting: `/lab/serier`
+
+Opprett serier, last opp bilder, sett rekkefølge og forsidebilde, slett.
+Siden er noindex og ligger under `/lab`, som robots.txt allerede utelukker.
+
+Krever miljøvariabelen `SERIER_ADMIN_PASSWORD` — både i Vercel og i
+`.env.local` lokalt. Uten den avvises all skriving. Passordet gjelder både
+API-rutene under `/api/serier/` og opplasting til `serier/`-prefikset i
+`/api/blob/upload`; `/lab` sine `now/`-opplastinger er uendret.
+
+Endringer slår gjennom på nettsiden innen ett minutt (`revalidate = 60`).

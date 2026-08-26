@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { handleUpload } from "@vercel/blob/client";
+import { checkAdmin } from "@/lib/admin-auth";
 
 const ALLOWED_IMAGE_TYPES = [
   "image/jpeg",
@@ -16,14 +17,28 @@ export async function POST(request: Request) {
       request,
       body,
       onBeforeGenerateToken: async (pathname, clientPayload, multipart) => {
-        // Enkle "guardrails" - allow paths like "now/2025/album/photo.jpg" or "now/2025-thumbnail.jpg"
-        if (!pathname.startsWith("now/")) {
-          throw new Error("Invalid upload path. Must start with now/.");
+        // Enkle "guardrails" - allow paths like "now/2025/album/photo.jpg",
+        // "now/2025-thumbnail.jpg" eller "serier/hjelle/01_bilde.jpg"
+        if (!pathname.startsWith("now/") && !pathname.startsWith("serier/")) {
+          throw new Error("Invalid upload path. Must start with now/ or serier/.");
         }
 
         // valgfritt: hindre rot i root
         if (!pathname.includes("/")) {
           throw new Error("Invalid upload path.");
+        }
+
+        // serier/ er innholdet på den offentlige nettsiden — krever passord.
+        // now/ er uendret (se /lab).
+        if (pathname.startsWith("serier/")) {
+          let password: string | null = null;
+          try {
+            password = JSON.parse(clientPayload ?? "{}")?.password ?? null;
+          } catch {
+            password = null;
+          }
+          const auth = checkAdmin(password);
+          if (!auth.ok) throw new Error(auth.message);
         }
 
         // Allow JSON for album metadata files
