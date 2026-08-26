@@ -1,36 +1,50 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# morildinho.no
 
-## Getting Started
+Next.js-side (App Router) på Vercel. Repoet inneholder to uavhengige ting:
 
-First, run the development server:
+1. **morildinho.no** — den offentlige porteføljesiden, under `app/(site)/`.
+2. **/lab** — eksperimenter, blant annet NOW Highlights som serves på
+   `highlights.nowla.org` via `middleware.ts` + rewrites i `next.config.ts`.
+   Disse har egen noindex og skal ikke røres av arbeid på nettsiden.
+
+## Kom i gang
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Nettsiden
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Designet kommer fra `design_handoff_morildinho` (Morildinho-Kino-v2).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Rute | Fil |
+| --- | --- |
+| `/` | `app/(site)/page.tsx` |
+| `/foto` | `app/(site)/foto/page.tsx` |
+| `/foto/[serie]` | `app/(site)/foto/[serie]/page.tsx` |
+| `/film` | `app/(site)/film/page.tsx` |
+| `/om` | `app/(site)/om/page.tsx` |
 
-## Learn More
+- All CSS ligger i `app/(site)/site.css`, scopet under `.site` slik at
+  `/lab` ikke påvirkes.
+- Fonter (Syne, Work Sans, Space Mono) lastes med `next/font/google` i
+  `app/layout.tsx` og eksponeres som CSS-variabler.
+- Innhold og bilder kommer fra `lib/site.ts`.
 
-To learn more about Next.js, take a look at the following resources:
+## Bilder — plassholdere i dag, Vercel Blob senere
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+`lib/site.ts` peker i dag på plassholderbilder i `public/photos/`. Når de ekte
+bildene skal inn:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. Last opp til Blob med én mappe per serie: `serier/<serie-id>/01_.jpg`,
+   `serier/<serie-id>/02_.jpg` … Filnavnet gir rekkefølgen.
+2. Lagre bredde/høyde per bilde i en `metadata.json` i samme mappe.
+   Skjelett-lastingen trenger `aspect-ratio` **før** bildet er lastet — uten
+   det hopper layouten. `list()` fra `@vercel/blob` returnerer ikke
+   bildedimensjoner, så de må lagres eksplisitt (samme mønster som
+   `/lab/now2025/upload` allerede bruker for rekkefølge og beskrivelse).
+3. Bytt ut `getSeries()` / `getSerie()` i `lib/site.ts` med Blob-kall. Resten
+   av siden trenger ingen endringer.
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Prefiksene `Gallery/` og `now/` i Blob tilhører gammelt innhold og /lab — bruk
+`serier/` for nettsiden.
