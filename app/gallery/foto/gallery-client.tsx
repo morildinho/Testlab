@@ -13,6 +13,9 @@ interface GalleryClientProps {
   images: GalleryImage[];
 }
 
+// Viser filnavn uten filendelse, f.eks. "Gåte 01.jpg" → "Gåte 01"
+const caption = (filename: string) => filename.replace(/\.[a-z0-9]+$/i, "");
+
 export default function GalleryClient({ images }: GalleryClientProps) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -317,11 +320,11 @@ export default function GalleryClient({ images }: GalleryClientProps) {
           >
             <img
               src={image.url}
-              alt={image.filename}
+              alt={caption(image.filename)}
               loading={index < 8 ? "eager" : "lazy"}
             />
             <div className="gallery-item-overlay">
-              <span className="gallery-item-name">{image.filename}</span>
+              <span className="gallery-item-name">{caption(image.filename)}</span>
             </div>
           </div>
         ))}
@@ -340,7 +343,7 @@ export default function GalleryClient({ images }: GalleryClientProps) {
                 {currentIndex + 1} / {images.length}
               </span>
               <span className="lightbox-filename">
-                {images[currentIndex].filename}
+                {caption(images[currentIndex].filename)}
               </span>
             </div>
             <div className="lightbox-actions">
@@ -371,7 +374,7 @@ export default function GalleryClient({ images }: GalleryClientProps) {
             <div className="lightbox-image-container">
               <img
                 src={images[currentIndex].url}
-                alt={images[currentIndex].filename}
+                alt={caption(images[currentIndex].filename)}
                 className="lightbox-image"
               />
             </div>

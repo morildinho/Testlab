@@ -1,27 +1,69 @@
 "use client";
 
-interface YoutubeVideo {
-  id: string;
+// En video er enten en YouTube-video (id) eller en egen videofil (videoUrl, f.eks. mp4 i Vercel Blob).
+export interface VideoItem {
+  id?: string;
+  videoUrl?: string;
+  poster?: string;
   title: string;
-}
-
-interface BlobVideo {
-  url: string;
-  filename: string;
+  description: string;
 }
 
 interface Props {
-  youtubeVideos: YoutubeVideo[];
-  blobVideos: BlobVideo[];
+  youtubeVideos: VideoItem[];
+  youtubeShorts: VideoItem[];
 }
 
-export default function VideoClient({ youtubeVideos, blobVideos }: Props) {
+const fill = { position: "absolute", top: 0, left: 0, width: "100%", height: "100%", border: "none" } as const;
+
+function VideoCard({ video, ratio }: { video: VideoItem; ratio: string }) {
+  return (
+    <div className="video-card">
+      <div style={{ position: "relative", paddingBottom: ratio, height: 0, background: "#000" }}>
+        {video.videoUrl ? (
+          <video
+            src={video.videoUrl}
+            controls
+            playsInline
+            preload="none"
+            poster={video.poster}
+            title={video.title}
+            style={{ ...fill, objectFit: "cover" }}
+          />
+        ) : (
+          <iframe
+            src={`https://www.youtube.com/embed/${video.id}`}
+            title={video.title}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            loading="lazy"
+            style={fill}
+          />
+        )}
+      </div>
+      <div className="video-info">
+        <div className="video-title">{video.title}</div>
+        <div className="video-desc">{video.description}</div>
+      </div>
+    </div>
+  );
+}
+
+export default function VideoClient({ youtubeVideos, youtubeShorts }: Props) {
   return (
     <>
       <style>{`
         .video-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+          grid-template-columns: repeat(auto-fill, minmax(min(340px, 100%), 1fr));
+          gap: 24px;
+          width: 100%;
+          max-width: 1200px;
+        }
+        .shorts-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 300px));
+          justify-content: center;
           gap: 24px;
           width: 100%;
           max-width: 1200px;
@@ -32,11 +74,26 @@ export default function VideoClient({ youtubeVideos, blobVideos }: Props) {
           background: rgba(255,255,255,0.03);
           border: 1px solid rgba(255,255,255,0.08);
         }
-        .video-title {
-          padding: 12px 16px;
-          font-size: 14px;
-          color: rgba(255,255,255,0.7);
+        .video-info {
+          padding: 12px 16px 14px;
           font-family: system-ui;
+        }
+        .video-title {
+          font-size: 14px;
+          color: rgba(255,255,255,0.85);
+        }
+        .video-desc {
+          margin-top: 4px;
+          font-size: 13px;
+          color: rgba(255,255,255,0.45);
+        }
+        .section-title {
+          color: rgba(255,255,255,0.5);
+          font-weight: 300;
+          font-size: 18px;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          margin: 0;
         }
         .back-link {
           color: rgba(255,255,255,0.4);
@@ -71,44 +128,20 @@ export default function VideoClient({ youtubeVideos, blobVideos }: Props) {
           color: "white",
         }}>Video</h1>
 
-        {/* YouTube embeds */}
+        {/* Liggende YouTube-videoer */}
         <div className="video-grid">
           {youtubeVideos.map((v) => (
-            <div key={v.id} className="video-card">
-              <div style={{ position: "relative", paddingBottom: "56.25%", height: 0 }}>
-                <iframe
-                  src={`https://www.youtube.com/embed/${v.id}`}
-                  title={v.title}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", border: "none" }}
-                />
-              </div>
-              <div className="video-title">{v.title}</div>
-            </div>
+            <VideoCard key={v.id ?? v.videoUrl} video={v} ratio="56.25%" />
           ))}
         </div>
 
-        {/* Blob videos */}
-        {blobVideos.length > 0 && (
+        {/* Stående YouTube Shorts */}
+        {youtubeShorts.length > 0 && (
           <>
-            <h2 style={{
-              color: "rgba(255,255,255,0.5)",
-              fontWeight: 300,
-              fontSize: 18,
-              letterSpacing: "0.1em",
-              textTransform: "uppercase",
-            }}>
-              Film
-            </h2>
-            <div className="video-grid">
-              {blobVideos.map((v) => (
-                <div key={v.url} className="video-card">
-                  <video controls style={{ width: "100%", display: "block" }}>
-                    <source src={v.url} />
-                  </video>
-                  <div className="video-title">{v.filename}</div>
-                </div>
+            <h2 className="section-title">Shorts</h2>
+            <div className="shorts-grid">
+              {youtubeShorts.map((v) => (
+                <VideoCard key={v.id ?? v.videoUrl} video={v} ratio="177.78%" />
               ))}
             </div>
           </>
